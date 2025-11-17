@@ -75,11 +75,11 @@ public class UserService {
      */
     public List<ReviewResponse> getUserReviews(Integer userId) {
         // Verificar que el usuario existe
-        if (!userRepository.existsById(userId)) {
+        if (!userRepository.existsById(userId.intValue())) {
             throw new ResourceNotFoundException("Usuario no encontrado con ID: " + userId);
         }
 
-        List<Review> reviews = reviewRepository.findByUser_UserId(userId);
+        List<Review> reviews = reviewRepository.findByUser_UserId(userId.longValue());
         
         return reviews.stream()
                 .map(reviewService::mapToReviewResponse)

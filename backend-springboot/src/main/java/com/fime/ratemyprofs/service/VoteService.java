@@ -56,7 +56,7 @@ public class VoteService {
 
         // Verificar si el usuario ya votó en esta reseña
         ReviewVote existingVote = reviewVoteRepository
-                .findByReview_ReviewIdAndUser_UserId(reviewId, userId)
+                .findByReview_ReviewIdAndUser_UserId(reviewId.longValue(), userId.longValue())
                 .orElse(null);
 
         if (existingVote != null) {

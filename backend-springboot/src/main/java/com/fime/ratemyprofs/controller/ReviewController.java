@@ -40,7 +40,7 @@ public class ReviewController {
         String email = userDetails.getUsername();
         Integer userId = userDetailsService.getUserIdByEmail(email);
         
-        ReviewResponse review = reviewService.createReview(request, userId);
+        ReviewResponse review = reviewService.createReview(request, userId.longValue());
         return ResponseEntity.status(HttpStatus.CREATED).body(review);
     }
 

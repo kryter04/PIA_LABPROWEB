@@ -109,7 +109,7 @@ public class AdminProfessorService {
                         .map(University::getName)
                         .collect(java.util.stream.Collectors.toList()))
                 .subjects(professor.getSubjects().stream()
-                        .map(Subject::getName)
+                        .map(com.fime.ratemyprofs.model.entity.Subject::getName)
                         .collect(java.util.stream.Collectors.toList()))
                 .build();
     }

@@ -28,7 +28,7 @@ public class UserController {
      */
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUserProfile(@PathVariable Integer userId) {
-        UserResponse user = userService.getUserProfile(userId);
+        UserResponse user = userService.getUserProfile(userId.longValue());
         return ResponseEntity.ok(user);
     }
 
@@ -48,7 +48,7 @@ public class UserController {
         String email = userDetails.getUsername();
         Integer authenticatedUserId = userDetailsService.getUserIdByEmail(email);
         
-        UserResponse updatedUser = userService.updateUserProfile(userId, request, authenticatedUserId);
+        UserResponse updatedUser = userService.updateUserProfile(userId.longValue(), request, authenticatedUserId.longValue());
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -78,7 +78,7 @@ public class UserController {
         String email = userDetails.getUsername();
         Integer authenticatedUserId = userDetailsService.getUserIdByEmail(email);
         
-        userService.deleteUserReview(userId, reviewId, authenticatedUserId);
+        userService.deleteUserReview(userId.longValue(), reviewId.longValue(), authenticatedUserId.longValue());
         return ResponseEntity.noContent().build();
     }
 }
