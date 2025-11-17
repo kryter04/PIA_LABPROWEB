@@ -1089,16 +1089,40 @@ $.ajax({
 ---
 
 #### DELETE /admin/reviews/{reviewId}
-Eliminar una reseña.
+Eliminar una reseña. Los votos e imágenes asociadas se eliminan automáticamente (cascade).
 
 **Headers:** Requiere autenticación (rol Admin)
 
-**Response:** `200 OK`
-```json
-{
-  "message": "Review deleted successfully"
-}
+**Response:** `204 No Content`  
+No devuelve ningún contenido. El código 204 indica que la eliminación fue exitosa.
+
+**Errores:**
+- `404 Not Found`: Reseña no encontrada
+
+**Ejemplo jQuery:**
+```javascript
+$.ajax({
+    url: 'http://localhost:8080/api/admin/reviews/1',
+    type: 'DELETE',
+    headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+    }
+}).done(function() {
+    console.log('Reseña eliminada exitosamente');
+    // Actualizar UI, eliminar elemento de la lista, etc.
+}).fail(function(xhr) {
+    if (xhr.status === 404) {
+        alert('Reseña no encontrada');
+    } else {
+        alert('Error al eliminar reseña');
+    }
+});
 ```
+
+**Nota importante:** Esta operación es irreversible. Al eliminar una reseña:
+- Se eliminan todos los votos asociados (likes/dislikes)
+- Se eliminan todas las imágenes asociadas
+- No se puede recuperar la reseña después de eliminarla
 
 ---
 

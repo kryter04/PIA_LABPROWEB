@@ -92,4 +92,18 @@ public class AdminReviewService {
         
         return reviewService.mapToReviewResponse(updatedReview);
     }
+
+    /**
+     * Elimina una reseña
+     * Los votos e imágenes asociadas se eliminan automáticamente por cascade
+     * Solo para administradores
+     */
+    @Transactional
+    public void deleteReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Reseña no encontrada con ID: " + reviewId));
+
+        reviewRepository.delete(review);
+    }
 }

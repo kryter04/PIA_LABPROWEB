@@ -66,4 +66,15 @@ public class AdminReviewController {
         ReviewResponse review = adminReviewService.updateReview(reviewId, request);
         return ResponseEntity.ok(review);
     }
+
+    /**
+     * DELETE /api/admin/reviews/{reviewId}
+     * Elimina una reseña (los votos e imágenes se eliminan automáticamente)
+     * Solo para administradores
+     */
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId) {
+        adminReviewService.deleteReview(reviewId);
+        return ResponseEntity.noContent().build();
+    }
 }
