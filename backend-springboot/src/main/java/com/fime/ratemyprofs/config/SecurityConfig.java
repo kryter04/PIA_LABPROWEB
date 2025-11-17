@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/api/register",
                                 "/api/login",
                                 "/api/password/recovery",
+                                "/api/password/reset",
                                 "/api/health",
                                 "/api/info"
                         ).permitAll()
