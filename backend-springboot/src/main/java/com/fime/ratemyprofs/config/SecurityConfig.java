@@ -50,11 +50,14 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/professors/**",
-                                "/api/ranking"
+                                "/api/ranking",
+                                "/api/reviews/**",
+                                "/api/subjects",
+                                "/api/universities"
                         ).permitAll()
-                        .requestMatchers("/api/reviews/**").hasAnyRole("ADMIN", "ESTUDIANTE")
+                        .requestMatchers(HttpMethod.POST, "/api/reviews/**").hasAnyRole("ADMIN", "ESTUDIANTE")
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "ESTUDIANTE")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
