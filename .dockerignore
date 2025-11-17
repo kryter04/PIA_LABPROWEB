@@ -1,0 +1,28 @@
+# Directories
+frontend/
+database/
+Docs/
+.vscode/
+.git/
+.gitignore
+
+# Backend target and build files
+backend-springboot/target/
+backend-springboot/.mvn/
+backend-springboot/mvnw
+backend-springboot/mvnw.cmd
+
+# Root target folder
+target/
+src/
+
+# IDE files
+*.iml
+.idea/
+.DS_Store
+
+# Log files
+*.log
+
+# Docker files
+docker-compose.yml
