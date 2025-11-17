@@ -1020,17 +1020,21 @@ Rechazar una reseña.
 ---
 
 #### PUT /admin/reviews/{reviewId}
-Editar una reseña (moderación).
+Editar el contenido de una reseña (rating y comentario). Solo para administradores.
 
 **Headers:** Requiere autenticación (rol Admin)
 
 **Request Body:**
 ```json
 {
-  "comment": "Edited comment for moderation purposes",
-  "rating": 4
+  "rating": 4,
+  "comment": "Edited comment for moderation purposes"
 }
 ```
+
+**Validaciones:**
+- `rating`: Requerido, debe ser un número entre 1 y 5
+- `comment`: Requerido, no puede estar vacío, máximo 1000 caracteres
 
 **Response:** `200 OK`
 ```json
@@ -1052,6 +1056,34 @@ Editar una reseña (moderación).
   "likeCount": 0,
   "dislikeCount": 0
 }
+```
+
+**Errores:**
+- `404 Not Found`: Reseña no encontrada
+- `400 Bad Request`: Validaciones fallidas (rating fuera de rango, comentario vacío, etc.)
+
+**Ejemplo jQuery:**
+```javascript
+$.ajax({
+    url: 'http://localhost:8080/api/admin/reviews/1',
+    type: 'PUT',
+    headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+    },
+    contentType: 'application/json',
+    data: JSON.stringify({
+        rating: 4,
+        comment: 'Comentario editado por moderación'
+    })
+}).done(function(data) {
+    console.log('Reseña actualizada:', data);
+}).fail(function(xhr) {
+    if (xhr.status === 404) {
+        alert('Reseña no encontrada');
+    } else if (xhr.status === 400) {
+        alert('Error de validación: ' + xhr.responseJSON.message);
+    }
+});
 ```
 
 ---

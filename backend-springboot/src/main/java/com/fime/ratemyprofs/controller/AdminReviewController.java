@@ -1,7 +1,9 @@
 package com.fime.ratemyprofs.controller;
 
+import com.fime.ratemyprofs.model.dto.admin.UpdateReviewRequest;
 import com.fime.ratemyprofs.model.dto.review.ReviewResponse;
 import com.fime.ratemyprofs.service.AdminReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +51,19 @@ public class AdminReviewController {
     @PutMapping("/{reviewId}/reject")
     public ResponseEntity<ReviewResponse> rejectReview(@PathVariable Long reviewId) {
         ReviewResponse review = adminReviewService.rejectReview(reviewId);
+        return ResponseEntity.ok(review);
+    }
+
+    /**
+     * PUT /api/admin/reviews/{reviewId}
+     * Edita el contenido de una reseña (rating y comentario)
+     * Solo para administradores
+     */
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<ReviewResponse> updateReview(
+            @PathVariable Long reviewId,
+            @Valid @RequestBody UpdateReviewRequest request) {
+        ReviewResponse review = adminReviewService.updateReview(reviewId, request);
         return ResponseEntity.ok(review);
     }
 }

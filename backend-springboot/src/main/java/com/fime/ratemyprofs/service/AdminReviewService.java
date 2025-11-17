@@ -1,6 +1,7 @@
 package com.fime.ratemyprofs.service;
 
 import com.fime.ratemyprofs.exception.ResourceNotFoundException;
+import com.fime.ratemyprofs.model.dto.admin.UpdateReviewRequest;
 import com.fime.ratemyprofs.model.dto.review.ReviewResponse;
 import com.fime.ratemyprofs.model.entity.Review;
 import com.fime.ratemyprofs.model.entity.ReviewStatus;
@@ -68,6 +69,25 @@ public class AdminReviewService {
                         "Estado 'Rejected' no encontrado"));
 
         review.setStatus(rejectedStatus);
+        Review updatedReview = reviewRepository.save(review);
+        
+        return reviewService.mapToReviewResponse(updatedReview);
+    }
+
+    /**
+     * Edita el contenido de una reseña (rating y comentario)
+     * Solo para administradores
+     */
+    @Transactional
+    public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Reseña no encontrada con ID: " + reviewId));
+
+        // Actualizar campos
+        review.setRating(request.getRating());
+        review.setComment(request.getComment());
+
         Review updatedReview = reviewRepository.save(review);
         
         return reviewService.mapToReviewResponse(updatedReview);
