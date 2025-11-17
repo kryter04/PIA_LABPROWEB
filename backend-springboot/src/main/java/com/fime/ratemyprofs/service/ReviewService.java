@@ -7,6 +7,9 @@ import com.fime.ratemyprofs.model.dto.review.ReviewResponse;
 import com.fime.ratemyprofs.model.entity.*;
 import com.fime.ratemyprofs.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,5 +140,38 @@ public class ReviewService {
                 .status(review.getStatus().getStatusName())
                 .createdAt(review.getCreatedAt())
                 .build();
+    }
+
+    /**
+     * Obtiene todas las reseñas con filtros opcionales
+     * Endpoint público que por defecto solo muestra reseñas aprobadas
+     * 
+     * @param professorId Filtro opcional por ID de profesor
+     * @param subjectId Filtro opcional por ID de materia
+     * @param status Filtro opcional por estado (por defecto "Approved")
+     * @param page Número de página (0-indexed)
+     * @param size Tamaño de página
+     * @return Página de reseñas
+     */
+    public Page<ReviewResponse> getAllReviews(
+            Integer professorId, 
+            Integer subjectId, 
+            String status,
+            int page, 
+            int size) {
+        
+        // Por defecto, solo mostrar reseñas aprobadas
+        String statusFilter = (status != null && !status.isEmpty()) ? status : "Approved";
+        
+        Pageable pageable = PageRequest.of(page, size);
+        
+        Page<Review> reviews = reviewRepository.findAllWithFilters(
+            professorId, 
+            subjectId, 
+            statusFilter, 
+            pageable
+        );
+        
+        return reviews.map(this::mapToReviewResponse);
     }
 }

@@ -9,6 +9,7 @@ import com.fime.ratemyprofs.service.ReviewService;
 import com.fime.ratemyprofs.service.VoteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,37 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final VoteService voteService;
     private final CustomUserDetailsService userDetailsService;
+
+    /**
+     * GET /api/reviews
+     * Obtiene todas las reseñas con filtros opcionales
+     * Endpoint público (no requiere autenticación)
+     * Por defecto, solo muestra reseñas aprobadas
+     * 
+     * @param professorId Filtro opcional por ID de profesor
+     * @param subjectId Filtro opcional por ID de materia
+     * @param status Filtro opcional por estado (por defecto "Approved")
+     * @param page Número de página (0-indexed, default: 0)
+     * @param size Tamaño de página (default: 10)
+     * @return Página de reseñas
+     */
+    @GetMapping
+    public ResponseEntity<Page<ReviewResponse>> getAllReviews(
+            @RequestParam(required = false) Integer professorId,
+            @RequestParam(required = false) Integer subjectId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Page<ReviewResponse> reviews = reviewService.getAllReviews(
+            professorId, 
+            subjectId, 
+            status, 
+            page, 
+            size
+        );
+        return ResponseEntity.ok(reviews);
+    }
 
     /**
      * POST /api/reviews

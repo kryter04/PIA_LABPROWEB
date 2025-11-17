@@ -65,4 +65,17 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     // Método para buscar reseña por reviewId (Long)
     @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
     java.util.Optional<Review> findById(@Param("reviewId") Long reviewId);
+
+    // Método para listar reseñas con filtros opcionales (público)
+    @Query("SELECT r FROM Review r " +
+           "WHERE (:professorId IS NULL OR r.professor.professorId = :professorId) " +
+           "AND (:subjectId IS NULL OR r.subject.subjectId = :subjectId) " +
+           "AND (:statusName IS NULL OR r.status.statusName = :statusName) " +
+           "ORDER BY r.createdAt DESC")
+    Page<Review> findAllWithFilters(
+        @Param("professorId") Integer professorId,
+        @Param("subjectId") Integer subjectId,
+        @Param("statusName") String statusName,
+        Pageable pageable
+    );
 }
