@@ -9,9 +9,13 @@ Los siguientes endpoints NO requieren autenticación:
 - `POST /api/register`
 - `POST /api/login`
 - `POST /api/password/recovery`
+- `POST /api/password/reset`
+- `GET /api/reviews` (nuevo)
 - `GET /api/professors`
 - `GET /api/professors/{id}`
 - `GET /api/ranking`
+- `GET /api/subjects`
+- `GET /api/universities`
 
 ### Endpoints Protegidos
 Todos los demás endpoints requieren un token JWT en el header de autorización.
@@ -234,7 +238,7 @@ Iniciar sesión.
 ---
 
 ### POST /api/password/recovery
-Recuperación de contraseña.
+Iniciar proceso de recuperación de contraseña (genera token en BD).
 
 **Request Body:**
 ```json
@@ -243,14 +247,98 @@ Recuperación de contraseña.
 }
 ```
 
-**Response:** `200 OK`
+**Validaciones:**
+- `email`: obligatorio, formato email válido
+
+**Response:** `200 OK` (siempre retorna el mismo mensaje por seguridad)
 ```json
 {
-  "message": "Password reset link sent to your email"
+  "message": "If your email exists in our system, you will receive password recovery instructions",
+  "email": "juan.perez@example.com",
+  "recoveryToken": null
 }
 ```
 
+**Nota de seguridad:** No revela si el email existe o no. El token se guarda en BD con expiración de 1 hora y NO se retorna en la respuesta.
+
 **Mostrar en:** `/forgot-password.html`
+
+---
+
+### POST /api/password/reset
+Resetear contraseña con token válido.
+
+**Request Body:**
+```json
+{
+  "token": "uuid-token-from-email",
+  "newPassword": "NewSecurePass123!"
+}
+```
+
+**Validaciones:**
+- `token`: obligatorio
+- `newPassword`: obligatorio, mínimo 8 caracteres
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Password successfully reset. You can now login with your new password.",
+  "email": "juan.perez@example.com",
+  "recoveryToken": null
+}
+```
+
+**Errores:**
+- `400 Bad Request`: Token inválido, expirado o ya usado
+
+**Nota:** El token solo puede usarse una vez y expira en 1 hora.
+
+**Mostrar en:** `/reset-password.html`
+
+---
+
+### GET /api/reviews
+Listar reseñas con filtros opcionales (público).
+
+**Query Parameters:**
+- `professorId` (optional): `number` - Filtrar por profesor
+- `subjectId` (optional): `number` - Filtrar por materia
+- `status` (optional): `string` - Filtrar por estado (default: "Approved")
+- `page` (optional): `number` - Número de página (default: 0)
+- `size` (optional): `number` - Tamaño de página (default: 10)
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "reviewId": 1,
+      "userId": 1,
+      "userName": "Juan Pérez",
+      "professorId": 1,
+      "professorName": "Dr. Carlos Rodriguez",
+      "subjectId": 1,
+      "subjectName": "Data Structures",
+      "rating": 5,
+      "comment": "Excelente profesor!",
+      "imageUrls": [],
+      "likeCount": 10,
+      "dislikeCount": 2,
+      "status": "Approved",
+      "createdAt": "2025-11-17T10:00:00"
+    }
+  ],
+  "totalPages": 1,
+  "totalElements": 1,
+  "number": 0,
+  "size": 10
+}
+```
+
+**Nota:** Por defecto solo muestra reseñas aprobadas (status="Approved").
+
+**Mostrar en:** `/professors.html`, `/professor-detail.html`
 
 ---
 
@@ -581,7 +669,7 @@ Listar todos los usuarios.
 ---
 
 #### POST /admin/users
-Crear nuevo usuario.
+Crear nuevo usuario manualmente (solo admin).
 
 **Headers:** Requiere autenticación (rol Admin)
 
@@ -591,9 +679,15 @@ Crear nuevo usuario.
   "name": "María González",
   "email": "maria.gonzalez@example.com",
   "password": "securePass123",
-  "roleId": 2
+  "roleName": "Estudiante"
 }
 ```
+
+**Validaciones:**
+- `name`: obligatorio, 2-255 caracteres
+- `email`: obligatorio, formato email válido, único en el sistema
+- `password`: obligatorio, mínimo 8 caracteres
+- `roleName`: obligatorio, "Admin" o "Estudiante"
 
 **Response:** `201 Created`
 ```json
@@ -602,6 +696,35 @@ Crear nuevo usuario.
   "name": "María González",
   "email": "maria.gonzalez@example.com",
   "role": "Estudiante",
+  "createdAt": "2025-11-17T11:00:00"
+}
+```
+
+**Errores:**
+- `409 Conflict`: Email ya existe
+- `400 Bad Request`: Rol inválido o validaciones fallidas
+
+---
+
+#### PUT /admin/users/{userId}/role
+Actualizar rol de un usuario.
+
+**Headers:** Requiere autenticación (rol Admin)
+
+**Request Body:**
+```json
+{
+  "roleName": "Admin"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "userId": 2,
+  "name": "María González",
+  "email": "maria.gonzalez@example.com",
+  "role": "Admin",
   "createdAt": "2025-11-17T11:00:00"
 }
 ```
@@ -1272,8 +1395,39 @@ $('.btn-like').click(function() {
 
 ---
 
+## Endpoints de Desarrollo (TEMPORAL)
+
+### GET /api/admin/recovery-tokens
+Lista todos los tokens de recuperación (solo para desarrollo/testing).
+
+**ADVERTENCIA:** Este endpoint es TEMPORAL y solo para desarrollo. **DEBE SER ELIMINADO EN PRODUCCIÓN** por seguridad.
+
+**Headers:** Requiere autenticación (rol Admin)
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "tokenId": 1,
+    "token": "uuid-token-string",
+    "userId": 1,
+    "userEmail": "user@example.com",
+    "userName": "Juan Pérez",
+    "expiresAt": "2025-11-17T18:00:00",
+    "used": false,
+    "expired": false,
+    "valid": true,
+    "createdAt": "2025-11-17T17:00:00"
+  }
+]
+```
+
+**Nota:** Este endpoint existe para facilitar el testing sin servicio de email. En producción, los tokens se enviarían por email y este endpoint no existiría.
+
+---
+
 **Última actualización:** Noviembre 2025  
 **Versión:** 1.0.0  
-**Stack:** Java 17 + Spring Boot 3.2 + PostgreSQL 16 + JWT
+**Stack:** Java 21 + Spring Boot 3.4 + PostgreSQL 16 + JWT
 
 **¡Sistema RateMyProfs API listo para integración!**

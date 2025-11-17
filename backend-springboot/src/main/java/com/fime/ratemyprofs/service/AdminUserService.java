@@ -1,7 +1,9 @@
 package com.fime.ratemyprofs.service;
 
 import com.fime.ratemyprofs.exception.BadRequestException;
+import com.fime.ratemyprofs.exception.DuplicateResourceException;
 import com.fime.ratemyprofs.exception.ResourceNotFoundException;
+import com.fime.ratemyprofs.model.dto.admin.CreateUserRequest;
 import com.fime.ratemyprofs.model.dto.admin.UpdateRoleRequest;
 import com.fime.ratemyprofs.model.dto.user.UserResponse;
 import com.fime.ratemyprofs.model.entity.Role;
@@ -13,8 +15,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,7 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Obtiene todos los usuarios con paginación
@@ -32,6 +38,42 @@ public class AdminUserService {
         Page<User> users = userRepository.findAll(pageable);
         
         return users.map(this::mapToUserResponse);
+    }
+
+    /**
+     * Crea un nuevo usuario manualmente
+     * Solo para administradores
+     * Permite asignar cualquier rol al crear el usuario
+     */
+    @Transactional
+    public UserResponse createUser(CreateUserRequest request) {
+        // Verificar si el email ya existe
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("Email already exists: " + request.getEmail());
+        }
+
+        // Validar que el rol existe y es válido
+        String roleName = request.getRoleName();
+        if (!roleName.equals("Admin") && !roleName.equals("Estudiante")) {
+            throw new BadRequestException("Rol inválido. Debe ser 'Admin' o 'Estudiante'");
+        }
+
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Rol no encontrado: " + roleName));
+
+        // Crear el nuevo usuario
+        User user = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(role)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User savedUser = userRepository.save(user);
+        
+        return mapToUserResponse(savedUser);
     }
 
     /**

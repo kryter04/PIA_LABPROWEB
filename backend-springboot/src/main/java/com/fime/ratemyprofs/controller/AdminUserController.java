@@ -1,11 +1,13 @@
 package com.fime.ratemyprofs.controller;
 
+import com.fime.ratemyprofs.model.dto.admin.CreateUserRequest;
 import com.fime.ratemyprofs.model.dto.admin.UpdateRoleRequest;
 import com.fime.ratemyprofs.model.dto.user.UserResponse;
 import com.fime.ratemyprofs.service.AdminUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +34,24 @@ public class AdminUserController {
         
         Page<UserResponse> users = adminUserService.getAllUsers(page, size);
         return ResponseEntity.ok(users);
+    }
+
+    /**
+     * POST /api/admin/users
+     * Crea un nuevo usuario manualmente (solo administradores)
+     * Body: {
+     *   "name": "string",
+     *   "email": "string",
+     *   "password": "string",
+     *   "roleName": "Admin" | "Estudiante"
+     * }
+     */
+    @PostMapping
+    public ResponseEntity<UserResponse> createUser(
+            @Valid @RequestBody CreateUserRequest request) {
+        
+        UserResponse newUser = adminUserService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     /**
