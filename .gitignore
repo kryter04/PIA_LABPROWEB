@@ -99,6 +99,67 @@ application-prod.yml
 logs/
 *.log.*
 
+# ==================================
+# Frontend (Node.js / Astro)
+# ==================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+.output/
+.vercel/
+.netlify/
+
+# Astro specific
+.astro/
+
+# Cache directories
+.cache/
+.temp/
+.tmp/
+.parcel-cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# npm package lock (opcional - descomentar si quieres versionarlo)
+# package-lock.json
+
+# yarn lock (opcional - descomentar si quieres versionarlo)
+# yarn.lock
+
+# pnpm lock (opcional - descomentar si quieres versionarlo)
+# pnpm-lock.yaml
+
+# Frontend environment
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.development
+
+# Editor directories
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 #MIO
 ARCHITECTURE.md
 INDEX.md
