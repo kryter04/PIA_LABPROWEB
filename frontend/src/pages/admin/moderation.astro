@@ -1,0 +1,465 @@
+---
+// Página: Moderación de Comentarios (Administrador)
+// Permite revisar, aprobar, editar y eliminar reseñas
+import AdminLayout from '../../components/AdminLayout.astro';
+import Modal from '../../components/Modal.astro';
+---
+
+<AdminLayout title="Moderación de Comentarios" activePage="moderation">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Moderación de Comentarios</h1>
+        <p class="text-gray-600 mt-2">Revisa y modera las reseñas de profesores</p>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="flex items-center gap-4">
+            <label class="text-sm font-medium text-gray-700">Filtrar por estado:</label>
+            <select id="status-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                <option value="Pending">Pendientes</option>
+                <option value="Approved">Aprobadas</option>
+                <option value="Rejected">Rechazadas</option>
+                <option value="">Todas</option>
+            </select>
+            <button id="filter-btn" class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                Filtrar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Loading state -->
+    <div id="loading" class="flex justify-center py-12">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin"></div>
+    </div>
+    
+    <!-- Tabla de reseñas -->
+    <div id="reviews-content" class="hidden bg-white rounded-lg shadow-sm overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comentario</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="reviews-table-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+        
+        <!-- Paginación -->
+        <div class="px-6 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Página <span id="current-page" class="font-medium">1</span> de <span id="total-pages" class="font-medium">1</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="prev-btn" class="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Anterior
+                    </button>
+                    <button id="next-btn" class="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Siguiente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para editar reseña -->
+    <Modal id="edit-review-modal" title="Editar Reseña" size="md">
+        <form id="edit-review-form" class="space-y-4">
+            <input type="hidden" id="review-id" />
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Calificación</label>
+                <select id="review-rating" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <option value="1">⭐ 1</option>
+                    <option value="2">⭐ 2</option>
+                    <option value="3">⭐ 3</option>
+                    <option value="4">⭐ 4</option>
+                    <option value="5">⭐ 5</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Comentario</label>
+                <textarea 
+                    id="review-comment" 
+                    required 
+                    rows="6" 
+                    maxlength="1000"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Comentario de la reseña..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">Máximo 1000 caracteres</p>
+            </div>
+        </form>
+        
+        <div slot="footer" class="flex justify-end gap-3">
+            <button type="button" class="modal-close px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button type="submit" form="edit-review-form" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Guardar Cambios
+            </button>
+        </div>
+    </Modal>
+    
+    <!-- Modal para responder -->
+    <Modal id="reply-modal" title="Responder a Reseña" size="md">
+        <div class="space-y-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-2">Reseña original:</p>
+                <p id="original-review" class="text-gray-900"></p>
+            </div>
+            
+            <form id="reply-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tu respuesta</label>
+                    <textarea 
+                        id="reply-text" 
+                        required 
+                        rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="Escribe tu respuesta..."></textarea>
+                </div>
+            </form>
+        </div>
+        
+        <div slot="footer" class="flex justify-end gap-3">
+            <button type="button" class="modal-close px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button type="submit" form="reply-form" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Enviar Respuesta
+            </button>
+        </div>
+    </Modal>
+</AdminLayout>
+
+<script>
+    import { API_BASE_URL, getAuthHeaders } from '../../config/api';
+    import { requireAdmin } from '../../scripts/auth-guard';
+    
+    // Verificar autenticación de admin
+    if (!requireAdmin()) {
+        // El script auth-guard ya redirige
+    }
+    
+    let currentPage = 0;
+    let totalPages = 0;
+    let currentStatus = 'Pending';
+    
+    // Cargar reseñas con filtros
+    async function loadReviews(page = 0, status = 'Pending') {
+        try {
+            const params = new URLSearchParams({
+                page: page.toString(),
+                size: '10',
+                ...(status && { status })
+            });
+            
+            const response = await fetch(`${API_BASE_URL}/admin/reviews?${params}`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al cargar reseñas');
+            
+            const data = await response.json();
+            currentPage = data.number;
+            totalPages = data.totalPages;
+            currentStatus = status;
+            
+            renderReviews(data.content);
+            updatePagination();
+            
+            // Mostrar contenido
+            document.getElementById('loading')!.classList.add('hidden');
+            document.getElementById('reviews-content')!.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error('Error cargando reseñas:', error);
+            alert('Error al cargar las reseñas');
+        }
+    }
+    
+    // Renderizar tabla de reseñas
+    function renderReviews(reviews: any[]) {
+        const tbody = document.getElementById('reviews-table-body')!;
+        tbody.innerHTML = '';
+        
+        if (reviews.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        No hay reseñas con este filtro
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        reviews.forEach(review => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition-colors';
+            
+            // Truncar comentario
+            const shortComment = review.comment.length > 80 
+                ? review.comment.substring(0, 80) + '...' 
+                : review.comment;
+            
+            // Color del estado
+            const statusColors: Record<string, string> = {
+                'Pending': 'bg-yellow-100 text-yellow-800',
+                'Approved': 'bg-green-100 text-green-800',
+                'Rejected': 'bg-red-100 text-red-800'
+            };
+            
+            tr.innerHTML = `
+                <td class="px-6 py-4">
+                    <div class="flex items-start gap-2">
+                        <span class="text-yellow-400 text-lg">⭐</span>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${review.rating}/5</div>
+                            <div class="text-sm text-gray-600 mt-1">${shortComment}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${review.professorName}</div>
+                    <div class="text-sm text-gray-500">${review.subjectName}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${review.userName || 'Anónimo'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-600">${formatDate(review.createdAt)}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[review.status] || 'bg-gray-100 text-gray-800'}">
+                        ${review.status}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        ${review.status === 'Pending' ? `
+                            <button 
+                                onclick="approveReview(${review.reviewId})"
+                                class="text-green-600 hover:text-green-900 text-sm"
+                                title="Aprobar">
+                                ✓
+                            </button>
+                            <button 
+                                onclick="rejectReview(${review.reviewId})"
+                                class="text-red-600 hover:text-red-900 text-sm"
+                                title="Rechazar">
+                                ✗
+                            </button>
+                        ` : ''}
+                        <button 
+                            onclick="editReview(${review.reviewId})"
+                            class="text-blue-600 hover:text-blue-900 text-sm"
+                            title="Editar">
+                            Editar
+                        </button>
+                        <button 
+                            onclick="replyReview(${review.reviewId}, '${review.comment.replace(/'/g, "\\'")}')"
+                            class="text-purple-600 hover:text-purple-900 text-sm"
+                            title="Responder">
+                            Responder
+                        </button>
+                        <button 
+                            onclick="deleteReview(${review.reviewId})"
+                            class="text-red-600 hover:text-red-900 text-sm"
+                            title="Eliminar">
+                            Eliminar
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Formatear fecha
+    function formatDate(dateString: string): string {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-MX', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    }
+    
+    // Actualizar paginación
+    function updatePagination() {
+        document.getElementById('current-page')!.textContent = (currentPage + 1).toString();
+        document.getElementById('total-pages')!.textContent = totalPages.toString();
+        
+        const prevBtn = document.getElementById('prev-btn') as HTMLButtonElement;
+        const nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
+        
+        prevBtn.disabled = currentPage === 0;
+        nextBtn.disabled = currentPage >= totalPages - 1;
+    }
+    
+    // Manejadores de paginación
+    document.getElementById('prev-btn')?.addEventListener('click', () => {
+        if (currentPage > 0) loadReviews(currentPage - 1, currentStatus);
+    });
+    
+    document.getElementById('next-btn')?.addEventListener('click', () => {
+        if (currentPage < totalPages - 1) loadReviews(currentPage + 1, currentStatus);
+    });
+    
+    // Filtro
+    document.getElementById('filter-btn')?.addEventListener('click', () => {
+        const status = (document.getElementById('status-filter') as HTMLSelectElement).value;
+        loadReviews(0, status);
+    });
+    
+    // Aprobar reseña (función global)
+    (window as any).approveReview = async function(reviewId: number) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}/approve`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al aprobar reseña');
+            
+            alert('Reseña aprobada correctamente');
+            loadReviews(currentPage, currentStatus);
+            
+        } catch (error) {
+            console.error('Error aprobando reseña:', error);
+            alert('Error al aprobar la reseña');
+        }
+    };
+    
+    // Rechazar reseña (función global)
+    (window as any).rejectReview = async function(reviewId: number) {
+        if (!confirm('¿Estás seguro de rechazar esta reseña?')) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}/reject`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al rechazar reseña');
+            
+            alert('Reseña rechazada correctamente');
+            loadReviews(currentPage, currentStatus);
+            
+        } catch (error) {
+            console.error('Error rechazando reseña:', error);
+            alert('Error al rechazar la reseña');
+        }
+    };
+    
+    // Editar reseña (función global)
+    (window as any).editReview = async function(reviewId: number) {
+        try {
+            // Obtener detalles de la reseña
+            const response = await fetch(`${API_BASE_URL}/reviews?page=0&size=100`);
+            const data = await response.json();
+            const review = data.content.find((r: any) => r.reviewId === reviewId);
+            
+            if (!review) throw new Error('Reseña no encontrada');
+            
+            (document.getElementById('review-id') as HTMLInputElement).value = reviewId.toString();
+            (document.getElementById('review-rating') as HTMLSelectElement).value = review.rating.toString();
+            (document.getElementById('review-comment') as HTMLTextAreaElement).value = review.comment;
+            
+            // Abrir modal
+            const modal = document.getElementById('edit-review-modal');
+            modal?.classList.remove('hidden');
+            modal?.classList.add('flex');
+            
+        } catch (error) {
+            console.error('Error cargando reseña:', error);
+            alert('Error al cargar los datos de la reseña');
+        }
+    };
+    
+    // Responder reseña (función global)
+    (window as any).replyReview = function(reviewId: number, comment: string) {
+        document.getElementById('original-review')!.textContent = comment;
+        
+        // Abrir modal
+        const modal = document.getElementById('reply-modal');
+        modal?.classList.remove('hidden');
+        modal?.classList.add('flex');
+    };
+    
+    // Eliminar reseña (función global)
+    (window as any).deleteReview = async function(reviewId: number) {
+        if (!confirm('¿Estás seguro de eliminar esta reseña? Esta acción no se puede deshacer.')) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al eliminar reseña');
+            
+            alert('Reseña eliminada correctamente');
+            loadReviews(currentPage, currentStatus);
+            
+        } catch (error) {
+            console.error('Error eliminando reseña:', error);
+            alert('Error al eliminar la reseña');
+        }
+    };
+    
+    // Enviar formulario de edición
+    document.getElementById('edit-review-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const reviewId = (document.getElementById('review-id') as HTMLInputElement).value;
+        const rating = parseInt((document.getElementById('review-rating') as HTMLSelectElement).value);
+        const comment = (document.getElementById('review-comment') as HTMLTextAreaElement).value;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ rating, comment })
+            });
+            
+            if (!response.ok) throw new Error('Error al actualizar reseña');
+            
+            alert('Reseña actualizada correctamente');
+            
+            // Cerrar modal y recargar
+            document.getElementById('edit-review-modal')?.classList.add('hidden');
+            document.getElementById('edit-review-modal')?.classList.remove('flex');
+            loadReviews(currentPage, currentStatus);
+            
+        } catch (error) {
+            console.error('Error actualizando reseña:', error);
+            alert('Error al actualizar la reseña');
+        }
+    });
+    
+    // Enviar respuesta (nota: no hay endpoint específico en la API)
+    document.getElementById('reply-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const replyText = (document.getElementById('reply-text') as HTMLTextAreaElement).value;
+        
+        // Simulación - en producción esto enviaría una notificación o comentario
+        alert(`Respuesta registrada: "${replyText}"\n\nNota: Esta funcionalidad requiere implementación adicional en el backend.`);
+        
+        // Cerrar modal
+        document.getElementById('reply-modal')?.classList.add('hidden');
+        document.getElementById('reply-modal')?.classList.remove('flex');
+        (document.getElementById('reply-form') as HTMLFormElement).reset();
+    });
+    
+    // Cargar reseñas al iniciar
+    loadReviews();
+</script>

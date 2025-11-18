@@ -1,0 +1,409 @@
+---
+// Página: Perfil del Profesor (Vista Pública)
+// Muestra información del profesor, reseñas y permite calificar
+import MainLayout from '../layouts/MainLayout.astro';
+import Modal from '../components/Modal.astro';
+---
+
+<MainLayout title="Perfil del Profesor">
+    <div class="max-w-5xl mx-auto">
+        <!-- Loading state -->
+        <div id="loading" class="flex justify-center py-12">
+            <div class="w-12 h-12 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin"></div>
+        </div>
+        
+        <!-- Contenido del profesor -->
+        <div id="professor-content" class="hidden">
+            <!-- Header del perfil -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex items-start gap-6">
+                    <!-- Foto del profesor -->
+                    <img id="professor-photo" src="" alt="" class="w-24 h-24 rounded-full object-cover" />
+                    
+                    <div class="flex-1">
+                        <h1 id="professor-name" class="text-3xl font-bold text-gray-900"></h1>
+                        <p id="professor-title" class="text-lg text-gray-600 mt-1"></p>
+                        <p id="professor-department" class="text-sm text-gray-500 mt-2"></p>
+                    </div>
+                    
+                    <!-- Rating general -->
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-gray-900" id="average-rating">0</div>
+                        <div class="flex items-center justify-center gap-1 mt-1" id="star-rating"></div>
+                        <p class="text-sm text-gray-500 mt-1"><span id="review-count">0</span> reseñas</p>
+                    </div>
+                </div>
+                
+                <!-- Distribución de calificaciones -->
+                <div class="mt-6 space-y-2" id="rating-distribution"></div>
+                
+                <!-- Botón para escribir reseña -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <button 
+                        id="write-review-btn"
+                        data-modal-open="review-modal"
+                        class="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                        Escribir Reseña
+                    </button>
+                    <p id="login-message" class="hidden text-sm text-gray-500 mt-2">
+                        Debes iniciar sesión para escribir una reseña
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Lista de reseñas -->
+            <div class="space-y-4" id="reviews-list"></div>
+        </div>
+    </div>
+    
+    <!-- Modal para escribir reseña -->
+    <Modal id="review-modal" title="Escribir Reseña" size="lg">
+        <form id="review-form" class="space-y-4">
+            <input type="hidden" id="professor-id" />
+            
+            <!-- Selección de materia -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Materia</label>
+                <select id="subject-select" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <option value="">Selecciona una materia</option>
+                </select>
+            </div>
+            
+            <!-- Calificación -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Calificación</label>
+                <div class="flex gap-2" id="rating-stars">
+                    {[1, 2, 3, 4, 5].map(rating => (
+                        <button type="button" data-rating={rating} class="rating-star text-3xl text-gray-300 hover:text-yellow-400 transition-colors">★</button>
+                    ))}
+                </div>
+                <input type="hidden" id="rating-input" required />
+            </div>
+            
+            <!-- Comentario -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Comentario</label>
+                <textarea id="comment-input" required rows="4" maxlength="1000" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Comparte tu experiencia con este profesor..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">Máximo 1000 caracteres</p>
+            </div>
+            
+            <!-- Anónimo -->
+            <div class="flex items-center">
+                <input type="checkbox" id="anonymous-check" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500" />
+                <label for="anonymous-check" class="ml-2 text-sm text-gray-700">Publicar como anónimo</label>
+            </div>
+        </form>
+        
+        <div slot="footer" class="flex justify-end gap-3">
+            <button type="button" class="modal-close px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button type="submit" form="review-form" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Enviar Reseña
+            </button>
+        </div>
+    </Modal>
+</MainLayout>
+
+<script>
+    import { API_BASE_URL, getAuthHeaders, getCurrentUser } from '../config/api';
+    
+    // Obtener ID del profesor desde URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const professorId = urlParams.get('id');
+    
+    if (!professorId) {
+        alert('ID de profesor no proporcionado');
+        window.location.href = '/';
+    }
+    
+    let professorData: any = null;
+    
+    // Cargar datos del profesor
+    async function loadProfessor() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/professors/${professorId}`);
+            if (!response.ok) throw new Error('Profesor no encontrado');
+            
+            professorData = await response.json();
+            renderProfessor(professorData);
+            
+        } catch (error) {
+            console.error('Error cargando profesor:', error);
+            alert('Error al cargar el profesor');
+            window.location.href = '/';
+        }
+    }
+    
+    // Renderizar información del profesor
+    function renderProfessor(data: any) {
+        // Header del perfil
+        document.getElementById('professor-photo')?.setAttribute('src', data.photoUrl || '/default-avatar.png');
+        document.getElementById('professor-photo')?.setAttribute('alt', data.name);
+        document.getElementById('professor-name')!.textContent = data.name;
+        document.getElementById('professor-title')!.textContent = `${data.title || ''} - Profesor de ${data.subjects?.join(', ') || 'N/A'}`;
+        document.getElementById('professor-department')!.textContent = `${data.departmentName || 'Departamento'}, ${data.universities?.join(', ') || 'Universidad'}`;
+        
+        // Rating
+        const avgRating = data.averageRating || 0;
+        document.getElementById('average-rating')!.textContent = avgRating.toFixed(1);
+        document.getElementById('review-count')!.textContent = data.reviewCount || 0;
+        
+        // Estrellas
+        const starsContainer = document.getElementById('star-rating')!;
+        starsContainer.innerHTML = renderStars(avgRating);
+        
+        // Distribución de ratings (simulado)
+        renderRatingDistribution(data.reviews || []);
+        
+        // Reseñas
+        renderReviews(data.reviews || []);
+        
+        // Llenar select de materias
+        const subjectSelect = document.getElementById('subject-select') as HTMLSelectElement;
+        data.subjects?.forEach((subject: string, index: number) => {
+            const option = document.createElement('option');
+            option.value = (index + 1).toString(); // Simplificado, debería ser el ID real
+            option.textContent = subject;
+            subjectSelect.appendChild(option);
+        });
+        
+        // Guardar ID del profesor en el formulario
+        (document.getElementById('professor-id') as HTMLInputElement).value = professorId!;
+        
+        // Mostrar contenido
+        document.getElementById('loading')!.classList.add('hidden');
+        document.getElementById('professor-content')!.classList.remove('hidden');
+        
+        // Verificar autenticación para el botón de reseña
+        const user = getCurrentUser();
+        if (!user) {
+            document.getElementById('write-review-btn')!.setAttribute('disabled', 'true');
+            document.getElementById('write-review-btn')!.classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('login-message')!.classList.remove('hidden');
+        }
+    }
+    
+    // Renderizar estrellas
+    function renderStars(rating: number): string {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        let stars = '';
+        
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<span class="text-yellow-400">★</span>';
+        }
+        if (hasHalfStar) {
+            stars += '<span class="text-yellow-400">☆</span>';
+        }
+        for (let i = fullStars + (hasHalfStar ? 1 : 0); i < 5; i++) {
+            stars += '<span class="text-gray-300">★</span>';
+        }
+        
+        return stars;
+    }
+    
+    // Calcular y renderizar distribución de calificaciones
+    function renderRatingDistribution(reviews: any[]) {
+        const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviews.forEach(review => {
+            if (review.rating in distribution) {
+                distribution[review.rating as keyof typeof distribution]++;
+            }
+        });
+        
+        const total = reviews.length || 1;
+        const container = document.getElementById('rating-distribution')!;
+        
+        [5, 4, 3, 2, 1].forEach(rating => {
+            const count = distribution[rating as keyof typeof distribution];
+            const percentage = (count / total) * 100;
+            
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-3';
+            div.innerHTML = `
+                <span class="text-sm text-gray-600 w-12">${rating} ★</span>
+                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-yellow-400" style="width: ${percentage}%"></div>
+                </div>
+                <span class="text-sm text-gray-600 w-12 text-right">${count}</span>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    // Renderizar lista de reseñas
+    function renderReviews(reviews: any[]) {
+        const container = document.getElementById('reviews-list')!;
+        container.innerHTML = '';
+        
+        if (reviews.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">No hay reseñas aún. ¡Sé el primero en escribir una!</p>';
+            return;
+        }
+        
+        reviews.forEach(review => {
+            const reviewCard = document.createElement('div');
+            reviewCard.className = 'bg-white rounded-lg shadow-sm p-6';
+            reviewCard.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+                            ${review.userName?.[0] || 'A'}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-gray-900">${review.userName || 'Anónimo'}</span>
+                                <span class="text-sm text-gray-500">• ${formatDate(review.createdAt)}</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-1">
+                                ${renderStars(review.rating)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-700 mt-4">${review.comment}</p>
+                <div class="flex items-center gap-4 mt-4">
+                    <button class="vote-btn flex items-center gap-1 text-sm text-gray-500 hover:text-green-600" data-review-id="${review.reviewId}" data-vote="Like">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                        </svg>
+                        ${review.likeCount || 0}
+                    </button>
+                    <button class="vote-btn flex items-center gap-1 text-sm text-gray-500 hover:text-red-600" data-review-id="${review.reviewId}" data-vote="Dislike">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path>
+                        </svg>
+                        ${review.dislikeCount || 0}
+                    </button>
+                </div>
+            `;
+            container.appendChild(reviewCard);
+        });
+        
+        // Agregar event listeners a botones de voto
+        document.querySelectorAll('.vote-btn').forEach(btn => {
+            btn.addEventListener('click', handleVote);
+        });
+    }
+    
+    // Formatear fecha
+    function formatDate(dateString: string): string {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - date.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 30) return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        if (diffDays < 365) return `hace ${Math.floor(diffDays / 30)} mes${Math.floor(diffDays / 30) > 1 ? 'es' : ''}`;
+        return `hace ${Math.floor(diffDays / 365)} año${Math.floor(diffDays / 365) > 1 ? 's' : ''}`;
+    }
+    
+    // Manejar votación
+    async function handleVote(e: Event) {
+        const btn = e.currentTarget as HTMLElement;
+        const reviewId = btn.dataset.reviewId;
+        const voteType = btn.dataset.vote;
+        
+        const user = getCurrentUser();
+        if (!user) {
+            alert('Debes iniciar sesión para votar');
+            window.location.href = '/login';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}/vote`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ voteType })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error al votar');
+            }
+            
+            // Recargar reseñas
+            loadProfessor();
+            
+        } catch (error: any) {
+            alert(error.message);
+        }
+    }
+    
+    // Sistema de calificación con estrellas
+    const ratingStars = document.querySelectorAll('.rating-star');
+    const ratingInput = document.getElementById('rating-input') as HTMLInputElement;
+    
+    ratingStars.forEach(star => {
+        star.addEventListener('click', () => {
+            const rating = star.getAttribute('data-rating')!;
+            ratingInput.value = rating;
+            
+            // Actualizar visualización
+            ratingStars.forEach((s, index) => {
+                if (index < parseInt(rating)) {
+                    s.classList.remove('text-gray-300');
+                    s.classList.add('text-yellow-400');
+                } else {
+                    s.classList.remove('text-yellow-400');
+                    s.classList.add('text-gray-300');
+                }
+            });
+        });
+    });
+    
+    // Enviar formulario de reseña
+    document.getElementById('review-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const professorId = (document.getElementById('professor-id') as HTMLInputElement).value;
+        const subjectId = (document.getElementById('subject-select') as HTMLSelectElement).value;
+        const rating = parseInt((document.getElementById('rating-input') as HTMLInputElement).value);
+        const comment = (document.getElementById('comment-input') as HTMLTextAreaElement).value;
+        const isAnonymous = (document.getElementById('anonymous-check') as HTMLInputElement).checked;
+        
+        if (!rating) {
+            alert('Por favor selecciona una calificación');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/reviews`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    professorId: parseInt(professorId),
+                    subjectId: parseInt(subjectId),
+                    rating,
+                    comment,
+                    isAnonymous,
+                    imageUrls: []
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error al crear reseña');
+            }
+            
+            alert('Reseña enviada para aprobación');
+            
+            // Cerrar modal y limpiar formulario
+            document.getElementById('review-modal')?.classList.add('hidden');
+            (e.target as HTMLFormElement).reset();
+            ratingInput.value = '';
+            ratingStars.forEach(s => s.classList.add('text-gray-300'));
+            ratingStars.forEach(s => s.classList.remove('text-yellow-400'));
+            
+        } catch (error: any) {
+            alert(error.message);
+        }
+    });
+    
+    // Cargar datos al iniciar
+    loadProfessor();
+</script>
