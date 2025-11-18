@@ -1,0 +1,261 @@
+---
+// Página: Dashboard de Analíticas (Administrador)
+// Muestra métricas clave y estadísticas de la plataforma
+import AdminLayout from '../../components/AdminLayout.astro';
+---
+
+<AdminLayout title="Dashboard" activePage="dashboard">
+    <!-- Título -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Analíticas de la Plataforma</h1>
+        <p class="text-gray-600 mt-2">Resumen de métricas y actividad del sistema</p>
+    </div>
+    
+    <!-- Loading state -->
+    <div id="loading" class="flex justify-center py-12">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin"></div>
+    </div>
+    
+    <!-- Contenido del dashboard -->
+    <div id="dashboard-content" class="hidden space-y-6">
+        <!-- Tarjetas de KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Usuarios Activos -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Usuarios Activos</p>
+                        <p id="active-users" class="text-3xl font-bold text-gray-900 mt-2">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reseñas Publicadas -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Reseñas Publicadas</p>
+                        <p id="total-reviews" class="text-3xl font-bold text-gray-900 mt-2">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profesor Mejor Calificado -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Profesor Mejor Calificado</p>
+                        <p id="top-professor-name" class="text-lg font-bold text-gray-900 mt-2">-</p>
+                        <p id="top-professor-rating" class="text-sm text-gray-600">⭐ 0.0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráficas -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Actividad de Usuarios -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Actividad de Usuarios</h3>
+                    <span id="user-growth" class="text-sm font-medium text-green-600">+0%</span>
+                </div>
+                <div id="user-activity-chart" class="h-64"></div>
+            </div>
+            
+            <!-- Reseñas a lo Largo del Tiempo -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Reseñas a lo Largo del Tiempo</h3>
+                    <span id="review-growth" class="text-sm font-medium text-green-600">+0%</span>
+                </div>
+                <div id="reviews-chart" class="h-64"></div>
+            </div>
+        </div>
+        
+        <!-- Mejores Profesores -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Mejores Profesores</h3>
+            <div class="space-y-4" id="top-professors-list"></div>
+        </div>
+    </div>
+</AdminLayout>
+
+<script>
+    import { API_BASE_URL, getAuthHeaders } from '../../config/api';
+    import { requireAdmin } from '../../scripts/auth-guard';
+    
+    // Verificar autenticación de admin
+    if (!requireAdmin()) {
+        // El script auth-guard ya redirige
+    }
+    
+    // Cargar datos del dashboard
+    async function loadDashboard() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/analytics/dashboard`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al cargar analíticas');
+            
+            const data = await response.json();
+            renderDashboard(data);
+            
+        } catch (error) {
+            console.error('Error cargando dashboard:', error);
+            alert('Error al cargar las analíticas');
+        }
+    }
+    
+    // Renderizar dashboard
+    function renderDashboard(data: any) {
+        // KPIs
+        document.getElementById('active-users')!.textContent = data.activeUsers?.toLocaleString() || '0';
+        document.getElementById('total-reviews')!.textContent = data.totalReviews?.toLocaleString() || '0';
+        
+        // Profesor mejor calificado
+        if (data.topRatedProfessor) {
+            document.getElementById('top-professor-name')!.textContent = data.topRatedProfessor.name;
+            document.getElementById('top-professor-rating')!.textContent = `⭐ ${data.topRatedProfessor.averageRating?.toFixed(1) || '0.0'}`;
+        }
+        
+        // Gráficas simplificadas con barras CSS
+        renderUserActivityChart();
+        renderReviewsChart();
+        
+        // Lista de mejores profesores
+        renderTopProfessors();
+        
+        // Mostrar contenido
+        document.getElementById('loading')!.classList.add('hidden');
+        document.getElementById('dashboard-content')!.classList.remove('hidden');
+    }
+    
+    // Gráfica de actividad de usuarios (últimos 6 meses)
+    function renderUserActivityChart() {
+        const months = ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const values = [120, 150, 180, 200, 250, 290]; // Datos simulados
+        
+        const maxValue = Math.max(...values);
+        const container = document.getElementById('user-activity-chart')!;
+        
+        container.innerHTML = `
+            <div class="flex items-end justify-between h-full gap-2">
+                ${values.map((value, index) => {
+                    const height = (value / maxValue) * 100;
+                    return `
+                        <div class="flex-1 flex flex-col items-center gap-2">
+                            <div class="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-colors relative group" 
+                                 style="height: ${height}%">
+                                <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    ${value}
+                                </span>
+                            </div>
+                            <span class="text-xs text-gray-600">${months[index]}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
+        // Calcular crecimiento
+        const growth = ((values[values.length - 1] - values[values.length - 2]) / values[values.length - 2] * 100).toFixed(0);
+        document.getElementById('user-growth')!.textContent = `+${growth}%`;
+    }
+    
+    // Gráfica de reseñas (últimos 4 trimestres)
+    function renderReviewsChart() {
+        const quarters = ['T1', 'T2', 'T3', 'T4'];
+        const values = [450, 520, 610, 680]; // Datos simulados
+        
+        const maxValue = Math.max(...values);
+        const container = document.getElementById('reviews-chart')!;
+        
+        container.innerHTML = `
+            <div class="flex items-end justify-between h-full gap-2">
+                ${values.map((value, index) => {
+                    const height = (value / maxValue) * 100;
+                    return `
+                        <div class="flex-1 flex flex-col items-center gap-2">
+                            <div class="w-full bg-green-500 rounded-t hover:bg-green-600 transition-colors relative group" 
+                                 style="height: ${height}%">
+                                <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    ${value}
+                                </span>
+                            </div>
+                            <span class="text-xs text-gray-600">${quarters[index]}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
+        // Calcular crecimiento
+        const growth = ((values[values.length - 1] - values[values.length - 2]) / values[values.length - 2] * 100).toFixed(0);
+        document.getElementById('review-growth')!.textContent = `+${growth}%`;
+    }
+    
+    // Renderizar lista de mejores profesores
+    async function renderTopProfessors() {
+        try {
+            // Obtener ranking de profesores
+            const response = await fetch(`${API_BASE_URL}/ranking?limit=5`);
+            const data = await response.json();
+            
+            const container = document.getElementById('top-professors-list')!;
+            container.innerHTML = '';
+            
+            if (!data.professors || data.professors.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No hay datos disponibles</p>';
+                return;
+            }
+            
+            data.professors.forEach((prof: any, index: number) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-4';
+                
+                const percentage = (prof.averageRating / 5) * 100;
+                
+                div.innerHTML = `
+                    <span class="text-lg font-bold text-gray-400 w-6">${index + 1}</span>
+                    <img src="${prof.photoUrl || '/default-avatar.png'}" alt="${prof.name}" 
+                         class="w-10 h-10 rounded-full object-cover" />
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900">${prof.name}</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full bg-yellow-400 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700 w-12">${prof.averageRating?.toFixed(1) || '0.0'}</span>
+                        </div>
+                    </div>
+                    <span class="text-sm text-gray-500">${prof.reviewCount || 0} reseñas</span>
+                `;
+                
+                container.appendChild(div);
+            });
+            
+        } catch (error) {
+            console.error('Error cargando ranking:', error);
+        }
+    }
+    
+    // Cargar dashboard al iniciar
+    loadDashboard();
+</script>

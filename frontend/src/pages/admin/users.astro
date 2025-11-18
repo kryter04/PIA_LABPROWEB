@@ -1,0 +1,360 @@
+---
+// Página: Listado de Usuarios (Administrador)
+// Permite ver, crear, editar y eliminar usuarios
+import AdminLayout from '../../components/AdminLayout.astro';
+import Modal from '../../components/Modal.astro';
+---
+
+<AdminLayout title="Gestión de Usuarios" activePage="users">
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Listado de Usuarios FIME</h1>
+            <p class="text-gray-600 mt-2">Gestiona los usuarios registrados en el sistema</p>
+        </div>
+        <button 
+            data-modal-open="user-modal" 
+            class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Añadir usuario
+        </button>
+    </div>
+    
+    <!-- Loading state -->
+    <div id="loading" class="flex justify-center py-12">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin"></div>
+    </div>
+    
+    <!-- Tabla de usuarios -->
+    <div id="users-content" class="hidden bg-white rounded-lg shadow-sm overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+        
+        <!-- Paginación -->
+        <div class="px-6 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Página <span id="current-page" class="font-medium">1</span> de <span id="total-pages" class="font-medium">1</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="prev-btn" class="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Anterior
+                    </button>
+                    <button id="next-btn" class="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Siguiente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para crear/editar usuario -->
+    <Modal id="user-modal" title="Añadir Usuario" size="md">
+        <form id="user-form" class="space-y-4">
+            <input type="hidden" id="user-id" />
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
+                <input 
+                    type="text" 
+                    id="user-name" 
+                    required 
+                    minlength="2"
+                    maxlength="255"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Ej: Juan Pérez" />
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input 
+                    type="email" 
+                    id="user-email" 
+                    required 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="correo@ejemplo.com" />
+            </div>
+            
+            <div id="password-field">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                <input 
+                    type="password" 
+                    id="user-password" 
+                    minlength="8"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Mínimo 8 caracteres" />
+                <p class="text-xs text-gray-500 mt-1">Dejar en blanco para mantener la contraseña actual</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                <select 
+                    id="user-role" 
+                    required 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <option value="Estudiante">Estudiante</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+        </form>
+        
+        <div slot="footer" class="flex justify-end gap-3">
+            <button type="button" class="modal-close px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button type="submit" form="user-form" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Guardar
+            </button>
+        </div>
+    </Modal>
+</AdminLayout>
+
+<script>
+    import { API_BASE_URL, getAuthHeaders } from '../../config/api';
+    import { requireAdmin } from '../../scripts/auth-guard';
+    
+    // Verificar autenticación de admin
+    if (!requireAdmin()) {
+        // El script auth-guard ya redirige
+    }
+    
+    let currentPage = 0;
+    let totalPages = 0;
+    let isEditMode = false;
+    
+    // Cargar usuarios con paginación
+    async function loadUsers(page = 0) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/users?page=${page}&size=10`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al cargar usuarios');
+            
+            const data = await response.json();
+            currentPage = data.number;
+            totalPages = data.totalPages;
+            
+            renderUsers(data.content);
+            updatePagination();
+            
+            // Mostrar contenido
+            document.getElementById('loading')!.classList.add('hidden');
+            document.getElementById('users-content')!.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error('Error cargando usuarios:', error);
+            alert('Error al cargar los usuarios');
+        }
+    }
+    
+    // Renderizar tabla de usuarios
+    function renderUsers(users: any[]) {
+        const tbody = document.getElementById('users-table-body')!;
+        tbody.innerHTML = '';
+        
+        if (users.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                        No hay usuarios registrados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition-colors';
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+                            ${user.name[0]}
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${user.email}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                    }">
+                        ${user.role}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                        onclick="editUser(${user.userId})"
+                        class="text-green-600 hover:text-green-900 mr-3">
+                        Editar
+                    </button>
+                    <button 
+                        onclick="deleteUser(${user.userId}, '${user.name}')"
+                        class="text-red-600 hover:text-red-900">
+                        Eliminar
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Actualizar paginación
+    function updatePagination() {
+        document.getElementById('current-page')!.textContent = (currentPage + 1).toString();
+        document.getElementById('total-pages')!.textContent = totalPages.toString();
+        
+        const prevBtn = document.getElementById('prev-btn') as HTMLButtonElement;
+        const nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
+        
+        prevBtn.disabled = currentPage === 0;
+        nextBtn.disabled = currentPage >= totalPages - 1;
+    }
+    
+    // Manejadores de paginación
+    document.getElementById('prev-btn')?.addEventListener('click', () => {
+        if (currentPage > 0) loadUsers(currentPage - 1);
+    });
+    
+    document.getElementById('next-btn')?.addEventListener('click', () => {
+        if (currentPage < totalPages - 1) loadUsers(currentPage + 1);
+    });
+    
+    // Abrir modal para crear usuario
+    document.querySelectorAll('[data-modal-open="user-modal"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            isEditMode = false;
+            const userModal = document.getElementById('user-modal');
+            const title = userModal?.querySelector('h3');
+            if (title) title.textContent = 'Añadir Usuario';
+            (document.getElementById('user-form') as HTMLFormElement).reset();
+            (document.getElementById('user-id') as HTMLInputElement).value = '';
+            (document.getElementById('user-password') as HTMLInputElement).required = true;
+            const passwordField = document.getElementById('password-field')?.querySelector('p');
+            passwordField?.classList.add('hidden');
+        });
+    });
+    
+    // Editar usuario (función global)
+    (window as any).editUser = async function(userId: number) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al cargar usuario');
+            
+            const user = await response.json();
+            
+            isEditMode = true;
+            const userModal = document.getElementById('user-modal');
+            const title = userModal?.querySelector('h3');
+            if (title) title.textContent = 'Editar Usuario';
+            (document.getElementById('user-id') as HTMLInputElement).value = userId.toString();
+            (document.getElementById('user-name') as HTMLInputElement).value = user.name;
+            (document.getElementById('user-email') as HTMLInputElement).value = user.email;
+            (document.getElementById('user-role') as HTMLSelectElement).value = user.role;
+            (document.getElementById('user-password') as HTMLInputElement).required = false;
+            const passwordField = document.getElementById('password-field')?.querySelector('p');
+            passwordField?.classList.remove('hidden');
+            
+            // Abrir modal
+            userModal?.classList.remove('hidden');
+            userModal?.classList.add('flex');
+            
+        } catch (error) {
+            console.error('Error cargando usuario:', error);
+            alert('Error al cargar los datos del usuario');
+        }
+    };
+    
+    // Eliminar usuario (función global)
+    (window as any).deleteUser = async function(userId: number, userName: string) {
+        if (!confirm(`¿Estás seguro de eliminar al usuario "${userName}"?`)) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) throw new Error('Error al eliminar usuario');
+            
+            alert('Usuario eliminado correctamente');
+            loadUsers(currentPage);
+            
+        } catch (error) {
+            console.error('Error eliminando usuario:', error);
+            alert('Error al eliminar el usuario');
+        }
+    };
+    
+    // Enviar formulario
+    document.getElementById('user-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const userId = (document.getElementById('user-id') as HTMLInputElement).value;
+        const name = (document.getElementById('user-name') as HTMLInputElement).value;
+        const email = (document.getElementById('user-email') as HTMLInputElement).value;
+        const password = (document.getElementById('user-password') as HTMLInputElement).value;
+        const roleName = (document.getElementById('user-role') as HTMLSelectElement).value;
+        
+        try {
+            let response;
+            
+            if (isEditMode && userId) {
+                // Actualizar usuario existente
+                const body: any = { name, email, roleId: roleName === 'Admin' ? 1 : 2 };
+                if (password) body.password = password;
+                
+                response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(body)
+                });
+            } else {
+                // Crear nuevo usuario
+                response = await fetch(`${API_BASE_URL}/admin/users`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ name, email, password, roleName })
+                });
+            }
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error al guardar usuario');
+            }
+            
+            alert(isEditMode ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente');
+            
+            // Cerrar modal y recargar
+            document.getElementById('user-modal')?.classList.add('hidden');
+            document.getElementById('user-modal')?.classList.remove('flex');
+            loadUsers(currentPage);
+            
+        } catch (error: any) {
+            alert(error.message);
+        }
+    });
+    
+    // Cargar usuarios al iniciar
+    loadUsers();
+</script>

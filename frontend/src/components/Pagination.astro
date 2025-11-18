@@ -1,0 +1,32 @@
+---
+// Componente de paginación reutilizable
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  onPageChange?: string; // Nombre de la función JS a llamar
+}
+
+const { currentPage, totalPages, onPageChange = 'changePage' } = Astro.props;
+---
+
+<div class="flex items-center justify-between mt-6">
+  <div class="text-sm text-gray-700">
+    Página <span class="font-medium">{currentPage + 1}</span> de <span class="font-medium">{totalPages}</span>
+  </div>
+  
+  <div class="flex gap-2">
+    <button 
+      onclick={`${onPageChange}(${currentPage - 1})`}
+      disabled={currentPage === 0}
+      class="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+      Anterior
+    </button>
+    
+    <button 
+      onclick={`${onPageChange}(${currentPage + 1})`}
+      disabled={currentPage >= totalPages - 1}
+      class="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+      Siguiente
+    </button>
+  </div>
+</div>
