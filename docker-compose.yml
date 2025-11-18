@@ -12,6 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/add_password_recovery.sql:/docker-entrypoint-initdb.d/02-add-recovery.sql
     networks:
       - ratemyprofs-network
     healthcheck:
@@ -37,7 +38,7 @@ services:
       DB_PASSWORD: postgres123
       JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       SERVER_PORT: 8080
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8080
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8080,http://localhost:4321
     ports:
       - "8080:8080"
     networks:
