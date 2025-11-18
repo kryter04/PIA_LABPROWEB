@@ -97,7 +97,7 @@ import AdminLayout from '../../components/AdminLayout.astro';
 </AdminLayout>
 
 <script>
-    import { API_BASE_URL, getAuthHeaders } from '../../config/api';
+    import { API_BASE_URL, getAuthHeaders } from '../../config/api.ts';
     import { requireAdmin } from '../../scripts/auth-guard';
     
     // Verificar autenticación de admin

@@ -108,7 +108,7 @@ import Modal from '../components/Modal.astro';
 </MainLayout>
 
 <script>
-    import { API_BASE_URL, getAuthHeaders, getCurrentUser } from '../config/api';
+    import { API_BASE_URL, getAuthHeaders, getCurrentUser } from '../config/api.ts';
     
     // Obtener ID del profesor desde URL
     const urlParams = new URLSearchParams(window.location.search);

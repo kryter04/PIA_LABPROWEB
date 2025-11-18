@@ -1,11 +1,11 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
 let professors = [];
 
 try {
-
-  const res = await fetch('/api/professors?page=0&size=10');
+  const res = await fetch(`${API_URL}/professors?page=0&size=10`);
   const data = await res.json();
 
   professors = data?.content ?? [];
@@ -129,7 +129,7 @@ try {
                       alt={name}
                     />
                     <a
-                      href={`/profesores/${id}`}
+                      href={`/professor?id=${id}`}
                       class="font-medium text-gray-900 hover:text-emerald-600"
                     >
                       {name}

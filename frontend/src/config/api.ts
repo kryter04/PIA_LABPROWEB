@@ -1,8 +1,11 @@
 // Configuración centralizada de la API
-export const API_BASE_URL = 'http://localhost:8080/api';
+export const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
 
 // Helper para construir headers con autenticación
 export function getAuthHeaders(): HeadersInit {
+  if (typeof window === 'undefined') {
+    return { 'Content-Type': 'application/json' };
+  }
   const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',

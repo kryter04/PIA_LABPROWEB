@@ -1,5 +1,5 @@
 // Script para proteger rutas de administrador
-import { isAdmin } from '../config/api';
+import { isAdmin } from '../config/api.ts';
 
 export function requireAuth() {
   const token = localStorage.getItem('token');

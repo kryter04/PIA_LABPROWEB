@@ -5,20 +5,64 @@
 <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
   <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
     <div class="flex items-center gap-6">
-      <a href="/auth" class="text-2xl font-bold text-gray-900">RateMyProfs</a>
+      <a href="/" class="text-2xl font-bold text-gray-900">RateMyProfs</a>
       <div class="hidden md:flex items-center gap-4">
-        <a href="/auth" class="text-gray-600 hover:text-brand-green">Inicio</a>
+        <a href="/" class="text-gray-600 hover:text-brand-green">Inicio</a>
         <a href="/mi-perfil" class="text-gray-600 hover:text-brand-green">Mi perfil</a>
         <a href="/ayuda" class="text-gray-600 hover:text-brand-green">Ayuda</a>
       </div>
     </div>
-    <div class="flex items-center gap-4">
-      <a href="/" class="text-sm font-medium text-gray-700 hover:text-brand-green">
-        Iniciar Sesión
-      </a>
-      <a href="/" class="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-opacity-80">
-        Registrarse
-      </a>
+    <div id="auth-section" class="flex items-center gap-4">
+      <!-- Auth buttons (se ocultan si hay sesión) -->
+      <div id="guest-buttons" class="flex items-center gap-4">
+        <a href="/auth" class="text-sm font-medium text-gray-700 hover:text-brand-green">
+          Iniciar Sesión
+        </a>
+        <a href="/auth" class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700">
+          Registrarse
+        </a>
+      </div>
+      
+      <!-- User menu (se muestra si hay sesión) -->
+      <div id="user-menu" class="hidden flex items-center gap-4">
+        <a href="/mi-perfil" class="text-sm font-medium text-gray-700 hover:text-green-600">
+          Mi Perfil
+        </a>
+        <button id="logout-btn" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">
+          Cerrar Sesión
+        </button>
+      </div>
     </div>
   </nav>
 </header>
+
+<script>
+  import { getCurrentUser } from '../config/api.ts';
+  
+  // Verificar si hay sesión activa
+  function checkAuth() {
+    const user = getCurrentUser();
+    const guestButtons = document.getElementById('guest-buttons');
+    const userMenu = document.getElementById('user-menu');
+    
+    if (user) {
+      // Usuario autenticado
+      guestButtons?.classList.add('hidden');
+      userMenu?.classList.remove('hidden');
+    } else {
+      // Usuario no autenticado
+      guestButtons?.classList.remove('hidden');
+      userMenu?.classList.add('hidden');
+    }
+  }
+  
+  // Manejar logout
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/auth';
+  });
+  
+  // Ejecutar al cargar
+  checkAuth();
+</script>
