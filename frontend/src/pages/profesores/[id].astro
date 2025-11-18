@@ -1,21 +1,17 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 
-
+// Ruta dinámica → se resuelve en runtime, no estática
 export const prerender = false;
 
 const { id } = Astro.params;
 
 type Review = {
   reviewId: number;
-  userId: number | null;
   userName: string | null;
   rating: number;
   comment: string;
-  isAnonymous: boolean;
-  status: string;
   createdAt: string;
-  totalVotes: number;
   likeCount: number;
   dislikeCount: number;
 };
@@ -36,20 +32,21 @@ type ProfessorDetail = {
 let professor: ProfessorDetail | null = null;
 let hasError = false;
 
+// ===== Helpers para estrellas y distribución =====
 
-const getStars = (rating: number | null | undefined) =>
-  Array.from({ length: 5 }, (_, i) => i < Math.round(rating ?? 0));
+type StarType = 'full' | 'half' | 'empty';
 
-function formatRelative(dateStr?: string | null) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '';
-  const diffMs = Date.now() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) return 'Hoy';
-  if (diffDays < 30) return `Hace ${diffDays} día${diffDays === 1 ? '' : 's'}`;
-  const months = Math.floor(diffDays / 30);
-  return `Hace ${months} mes${months === 1 ? '' : 'es'}`;
+function buildStars(rating: number | null | undefined): StarType[] {
+  if (!rating || rating <= 0) return ['empty', 'empty', 'empty', 'empty', 'empty'];
+  const full = Math.floor(rating);
+  const hasHalf = rating - full >= 0.5;
+  const stars: StarType[] = [];
+  for (let i = 0; i < 5; i++) {
+    if (i < full) stars.push('full');
+    else if (i === full && hasHalf) stars.push('half');
+    else stars.push('empty');
+  }
+  return stars;
 }
 
 function buildRatingStats(reviews: Review[] = []) {
@@ -66,8 +63,22 @@ function buildRatingStats(reviews: Review[] = []) {
   });
 }
 
+function formatRelative(dateStr?: string | null) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const diffMs = Date.now() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return 'Hoy';
+  if (diffDays < 30) return `Hace ${diffDays} día${diffDays === 1 ? '' : 's'}`;
+  const months = Math.floor(diffDays / 30);
+  return `Hace ${months} mes${months === 1 ? '' : 'es'}`;
+}
+
+// ===== Llamada real a la API (sin mocks) =====
 
 try {
+  // Usamos el proxy de Astro: /api → backend :8080
   const res = await fetch(`/api/professors/${id}`);
 
   if (res.ok) {
@@ -84,14 +95,15 @@ try {
 const ratingStats = professor ? buildRatingStats(professor.reviews ?? []) : [];
 const avgRating = professor?.averageRating ?? null;
 const totalReviews = professor?.reviewCount ?? professor?.reviews?.length ?? 0;
+const avgStars = buildStars(avgRating);
 ---
 
-<MainLayout title={professor ? professor.name : 'Detalle de profesor'}>
+<MainLayout title={professor ? professor.name : 'Detalle del profesor'}>
   <main class="max-w-5xl mx-auto px-4 py-10 space-y-6">
 
     {hasError && (
       <p class="rounded-lg bg-red-50 border border-red-100 px-4 py-2 text-sm text-red-700">
-        No se pudo cargar la información del profesor. Verifica que el backend esté
+        No se pudo cargar la información del profesor. Revisa que el backend esté
         levantado y que exista el profesor con id {id}.
       </p>
     )}
@@ -99,157 +111,147 @@ const totalReviews = professor?.reviewCount ?? professor?.reviews?.length ?? 0;
     {professor && (
       <>
         <!-- Encabezado del perfil -->
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex gap-4 items-center">
-          <div class="flex-shrink-0">
-            <div class="h-24 w-24 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
-              {professor.photoUrl ? (
-                <img
-                  src={professor.photoUrl}
-                  alt={professor.name}
-                  class="h-full w-full object-cover"
-                />
-              ) : (
-                <span class="text-3xl text-gray-500">
-                  {professor.name.charAt(0)}
-                </span>
-              )}
+        <section class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex flex-col gap-6 md:flex-row md:items-start">
+            <!-- Foto -->
+            <div class="flex-shrink-0">
+              <img
+                src={professor.photoUrl || '/default-avatar.png'}
+                alt={professor.name}
+                class="w-24 h-24 rounded-full object-cover"
+              />
             </div>
-          </div>
 
-          <div class="flex-1 space-y-1">
-            <h1 class="text-2xl font-semibold text-gray-900">
-              {professor.name}
-            </h1>
-            <p class="text-sm text-green-600">
-              {professor.title}
-            </p>
-            <p class="text-xs text-gray-500">
-              {professor.departmentName}
-            </p>
-          </div>
-        </section>
+            <!-- Datos del profesor -->
+            <div class="flex-1">
+              <h1 class="text-3xl font-bold text-gray-900">
+                {professor.name}
+              </h1>
+              <p class="text-lg text-gray-600 mt-1">
+                {professor.title || 'Profesor'} de{' '}
+                {professor.subjects?.join(', ') || 'N/A'}
+              </p>
+              <p class="text-sm text-gray-500 mt-2">
+                {professor.departmentName},{' '}
+                {professor.universities?.join(', ') || 'Universidad'}
+              </p>
+            </div>
 
-        <!-- Resumen de calificaciones -->
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 class="text-base font-semibold text-gray-900 mb-4">
-            Resumen de Calificaciones
-          </h2>
-
-          <div class="flex flex-col gap-6 md:flex-row">
-            <!-- Promedio -->
-            <div class="md:w-1/3 flex flex-col items-start">
-              <p class="text-4xl font-semibold text-gray-900">
+            <!-- Rating general -->
+            <div class="text-center md:w-40">
+              <div class="text-4xl font-bold text-gray-900">
                 {avgRating ? avgRating.toFixed(1) : '—'}
-              </p>
-              <div class="mt-1 flex items-center gap-1">
-                <div class="flex">
-                  {getStars(avgRating).map((filled) => (
-                    <span
-                      class={filled ? 'text-green-500' : 'text-gray-300'}
-                      aria-hidden="true"
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
               </div>
-              <p class="mt-2 text-xs text-gray-500">
-                Basado en {totalReviews} reseña{totalReviews === 1 ? '' : 's'}
+              <div class="flex items-center justify-center gap-1 mt-1">
+                {avgStars.map((t) => (
+                  t === 'full' ? (
+                    <span class="text-yellow-400">★</span>
+                  ) : t === 'half' ? (
+                    <span class="text-yellow-400">☆</span>
+                  ) : (
+                    <span class="text-gray-300">★</span>
+                  )
+                ))}
+              </div>
+              <p class="text-sm text-gray-500 mt-1">
+                {totalReviews} reseña{totalReviews === 1 ? '' : 's'}
               </p>
-            </div>
-
-            <!-- Barras -->
-            <div class="md:w-2/3 space-y-2">
-              {ratingStats.map((row) => (
-                <div class="flex items-center gap-2 text-xs text-gray-600">
-                  <span class="w-3 text-right">{row.star}</span>
-                  <span class="text-[10px] text-gray-500">★</span>
-                  <div class="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-                    <div
-                      class="h-2 bg-green-500"
-                      style={`width: ${row.percentage}%;`}
-                    ></div>
-                  </div>
-                  <span class="w-10 text-right">
-                    {row.percentage}%
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
 
-          <!-- Botón de reseña -->
-          <div class="mt-6 flex items-center justify-between gap-4 border-t border-gray-100 pt-4">
-            <p class="text-sm font-semibold text-gray-900">
+          <!-- Distribución de calificaciones -->
+          <div class="mt-6 space-y-2">
+            {ratingStats.map((row) => (
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-600 w-12">{row.star} ★</span>
+                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-yellow-400"
+                    style={`width: ${row.percentage}%;`}
+                  ></div>
+                </div>
+                <span class="text-sm text-gray-600 w-10 text-right">
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <!-- Botón de reseña (solo visual, sin lógica de auth/Modal) -->
+          <div class="mt-6 pt-6 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-base font-semibold text-gray-900">
               Reseñas de Estudiantes
             </p>
             <div class="flex flex-col items-end gap-1">
               <button
                 type="button"
-                class="rounded-full bg-gray-200 text-gray-500 text-xs px-4 py-1 cursor-not-allowed"
+                class="px-6 py-2 bg-gray-200 text-gray-500 font-medium rounded-lg cursor-not-allowed"
               >
                 Escribir Reseña
               </button>
-              <p class="text-[11px] text-gray-400">
+              <p class="text-xs text-gray-500">
                 Debes iniciar sesión para escribir una reseña.
               </p>
             </div>
           </div>
         </section>
 
-        <!-- Reseñas de estudiantes -->
-        <section class="space-y-3">
+        <!-- Lista de reseñas -->
+        <section class="space-y-4">
           {(!professor.reviews || professor.reviews.length === 0) ? (
-            <p class="text-sm text-gray-500">
-              Aún no hay reseñas registradas para este profesor.
+            <p class="text-center text-gray-500 py-8">
+              No hay reseñas aún. Sé el primero en escribir una (cuando esté
+              habilitado).
             </p>
           ) : (
-            professor.reviews.map((review) => (
-              <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex gap-3">
-                <div class="flex-shrink-0">
-                  <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    <span class="text-xs text-gray-600">
-                      {review.userName?.charAt(0) ?? 'A'}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="flex-1">
-                  <header class="flex flex-wrap items-center justify-between gap-2 mb-1">
-                    <div>
-                      <p class="text-sm font-semibold text-gray-900">
-                        {review.userName ?? 'Estudiante'}
-                      </p>
-                      <p class="text-[11px] text-gray-400">
-                        {formatRelative(review.createdAt)}
-                      </p>
-                    </div>
-
-                    <div class="flex items-center gap-1">
-                      <div class="flex text-xs">
-                        {getStars(review.rating).map((filled) => (
-                          <span
-                            class={filled ? 'text-green-500' : 'text-gray-300'}
-                            aria-hidden="true"
-                          >
-                            ★
+            professor.reviews.map((review) => {
+              const reviewStars = buildStars(review.rating);
+              return (
+                <article class="bg-white rounded-lg shadow-sm p-6">
+                  <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-4">
+                      <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+                        {review.userName?.[0] || 'A'}
+                      </div>
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium text-gray-900">
+                            {review.userName || 'Anónimo'}
                           </span>
-                        ))}
+                          <span class="text-sm text-gray-500">
+                            • {formatRelative(review.createdAt)}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1 mt-1">
+                          {reviewStars.map((t) => (
+                            t === 'full' ? (
+                              <span class="text-yellow-400">★</span>
+                            ) : t === 'half' ? (
+                              <span class="text-yellow-400">☆</span>
+                            ) : (
+                              <span class="text-gray-300">★</span>
+                            )
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </header>
+                  </div>
 
-                  <p class="text-sm text-gray-700 mb-2">
+                  <p class="text-gray-700 mt-4">
                     {review.comment}
                   </p>
 
-                  <footer class="flex items-center gap-4 text-xs text-gray-500">
-                    <span>👍 {review.likeCount}</span>
-                    <span>👎 {review.dislikeCount}</span>
-                  </footer>
-                </div>
-              </article>
-            ))
+                  <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
+                    <span class="flex items-center gap-1">
+                      👍 {review.likeCount}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      👎 {review.dislikeCount}
+                    </span>
+                  </div>
+                </article>
+              );
+            })
           )}
         </section>
       </>

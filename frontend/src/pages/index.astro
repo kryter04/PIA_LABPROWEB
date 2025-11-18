@@ -16,26 +16,27 @@ interface Professor {
 let professors: Professor[] = [];
 let hasError = false;
 
-// Helper para dibujar estrellas
+// Helper para dibujar estrellas llenas/vacías
 const getStars = (rating: number | null | undefined) =>
   Array.from({ length: 5 }, (_, i) => i < Math.round(rating ?? 0));
 
 try {
-  // Llamamos al backend real (paginado)
-  const res = await fetch('http://localhost:8080/api/professors?page=0&size=50');
+  // Usamos el proxy de Astro → /api → backend (8080)
+  const res = await fetch('/api/professors?page=0&size=50');
 
   if (res.ok) {
     const data = await res.json();
-    professors = (data.content ?? []) as Professor[];
+    // Puede venir paginado (data.content) o como lista directa
+    professors = (data.content ?? data) as Professor[];
   } else {
     hasError = true;
     console.error('Error al obtener profesores:', res.status);
   }
 } catch (err) {
-  console.error('Error al conectar con el backend, usando datos de ejemplo:', err);
   hasError = true;
+  console.error('Error al conectar con el backend:', err);
 
-  // Datos de ejemplo si el backend no está levantado
+  // Fallback SOLO para ver la tabla, sin calificaciones (estadísticas vacías)
   professors = [
     {
       professorId: 1,
@@ -43,10 +44,10 @@ try {
       title: 'Dr.',
       subjects: ['Informática'],
       photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.5,
-      reviewCount: 32,
+      averageRating: null,
+      reviewCount: 0,
       departmentName: 'Informática',
-      universities: ['FIME UANL']
+      universities: ['FIME UANL'],
     },
     {
       professorId: 2,
@@ -54,10 +55,10 @@ try {
       title: 'Prof.',
       subjects: ['Matemáticas'],
       photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.8,
-      reviewCount: 21,
+      averageRating: null,
+      reviewCount: 0,
       departmentName: 'Matemáticas',
-      universities: ['FIME UANL']
+      universities: ['FIME UANL'],
     },
     {
       professorId: 3,
@@ -65,10 +66,10 @@ try {
       title: 'Dr.',
       subjects: ['Física'],
       photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.2,
-      reviewCount: 15,
+      averageRating: null,
+      reviewCount: 0,
       departmentName: 'Física',
-      universities: ['FIME UANL']
+      universities: ['FIME UANL'],
     },
     {
       professorId: 4,
@@ -76,10 +77,10 @@ try {
       title: 'Prof.',
       subjects: ['Química'],
       photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.6,
-      reviewCount: 18,
+      averageRating: null,
+      reviewCount: 0,
       departmentName: 'Química',
-      universities: ['FIME UANL']
+      universities: ['FIME UANL'],
     },
     {
       professorId: 5,
@@ -87,11 +88,11 @@ try {
       title: 'Dr.',
       subjects: ['Biología'],
       photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.0,
-      reviewCount: 9,
+      averageRating: null,
+      reviewCount: 0,
       departmentName: 'Biología',
-      universities: ['FIME UANL']
-    }
+      universities: ['FIME UANL'],
+    },
   ];
 }
 ---
@@ -113,7 +114,7 @@ try {
         />
       </div>
 
-      <!-- Filtros 'falsos' solo de UI (si quieres luego los conectamos) -->
+      <!-- Filtros solo visuales -->
       <div class="flex flex-wrap gap-2 mb-6">
         <button class="px-3 py-1.5 text-xs rounded-full border border-gray-200 bg-white hover:bg-gray-50">
           Asignatura
@@ -132,7 +133,7 @@ try {
         <h2 class="text-base font-semibold text-gray-800">Profesores</h2>
         {hasError && (
           <p class="mt-1 text-xs text-red-500">
-            No se pudo conectar al backend. Mostrando datos de ejemplo.
+            No se pudo conectar al backend. Se muestran datos de ejemplo sin calificación.
           </p>
         )}
       </header>
@@ -152,7 +153,7 @@ try {
               <tr class="hover:bg-gray-50 transition">
                 <td class="px-6 py-4">
                   <a
-                    href={`/profesores/${p.professorId}`}
+                    href={`/professor?id=${p.professorId}`}
                     class="flex items-center gap-3 group"
                   >
                     <div class="h-9 w-9 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
@@ -178,21 +179,26 @@ try {
                     </div>
                   </a>
                 </td>
+
                 <td class="px-6 py-4 text-gray-700">
                   {p.subjects && p.subjects.length > 0 ? p.subjects[0] : '—'}
                 </td>
+
                 <td class="px-6 py-4 text-gray-700">
                   {p.universities && p.universities.length > 0
                     ? p.universities[0]
                     : '—'}
                 </td>
+
                 <td class="px-6 py-4">
-                  {p.averageRating == null ? (
-                    <span class="text-xs text-gray-400">Sin calificación</span>
+                  {p.reviewCount == null || p.reviewCount === 0 || p.averageRating == null ? (
+                    <span class="text-xs text-gray-400 italic">
+                      Sin calificación
+                    </span>
                   ) : (
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-2">
                       <div class="flex">
-                        {getStars(p.averageRating).map((filled, idx) => (
+                        {getStars(p.averageRating).map((filled) => (
                           <span
                             class={filled ? 'text-yellow-400' : 'text-gray-300'}
                             aria-hidden="true"
@@ -201,8 +207,8 @@ try {
                           </span>
                         ))}
                       </div>
-                      <span class="ml-1 text-xs text-gray-600">
-                        {p.averageRating.toFixed(1)} ({p.reviewCount} reseñas)
+                      <span class="text-sm text-gray-700">
+                        {p.averageRating.toFixed(1)}
                       </span>
                     </div>
                   )}
@@ -215,7 +221,7 @@ try {
     </section>
   </main>
 
-  <!-- Filtro de búsqueda en el lado del cliente -->
+  <!-- Filtro de búsqueda en el cliente (sobre la tabla ya renderizada) -->
   <script>
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('professorsTableBody');
