@@ -1,188 +1,235 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
-let professors = [];
+interface Professor {
+  professorId: number;
+  name: string;
+  title: string;
+  departmentName?: string;
+  photoUrl?: string;
+  averageRating: number | null;
+  reviewCount: number;
+  universities?: string[];
+  subjects?: string[];
+}
+
+let professors: Professor[] = [];
+let hasError = false;
+
+// Helper para dibujar estrellas
+const getStars = (rating: number | null | undefined) =>
+  Array.from({ length: 5 }, (_, i) => i < Math.round(rating ?? 0));
 
 try {
-  const res = await fetch(`${API_URL}/professors?page=0&size=10`);
-  const data = await res.json();
+  // Llamamos al backend real (paginado)
+  const res = await fetch('http://localhost:8080/api/professors?page=0&size=50');
 
-  professors = data?.content ?? [];
-} catch (error) {
-  console.error('Error al obtener profesores:', error);
+  if (res.ok) {
+    const data = await res.json();
+    professors = (data.content ?? []) as Professor[];
+  } else {
+    hasError = true;
+    console.error('Error al obtener profesores:', res.status);
+  }
+} catch (err) {
+  console.error('Error al conectar con el backend, usando datos de ejemplo:', err);
+  hasError = true;
 
+  // Datos de ejemplo si el backend no está levantado
   professors = [
     {
       professorId: 1,
-      name: 'Alex Turner',
+      name: 'Dr. Alex Turner',
       title: 'Dr.',
       subjects: ['Informática'],
-      universities: ['FIME UANL'],
-      photoUrl: 'https://placehold.co/40x40'
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.5,
+      reviewCount: 32,
+      departmentName: 'Informática',
+      universities: ['FIME UANL']
     },
     {
       professorId: 2,
-      name: 'Olivia Bennett',
+      name: 'Prof. Olivia Bennett',
       title: 'Prof.',
       subjects: ['Matemáticas'],
-      universities: ['FIME UANL'],
-      photoUrl: 'https://placehold.co/40x40'
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.8,
+      reviewCount: 21,
+      departmentName: 'Matemáticas',
+      universities: ['FIME UANL']
     },
     {
       professorId: 3,
-      name: 'Ethan Carter',
+      name: 'Dr. Ethan Carter',
       title: 'Dr.',
       subjects: ['Física'],
-      universities: ['FIME UANL'],
-      photoUrl: 'https://placehold.co/40x40'
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.2,
+      reviewCount: 15,
+      departmentName: 'Física',
+      universities: ['FIME UANL']
     },
     {
       professorId: 4,
-      name: 'Sophia Davis',
+      name: 'Prof. Sophia Davis',
       title: 'Prof.',
       subjects: ['Química'],
-      universities: ['FIME UANL'],
-      photoUrl: 'https://placehold.co/40x40'
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.6,
+      reviewCount: 18,
+      departmentName: 'Química',
+      universities: ['FIME UANL']
     },
     {
       professorId: 5,
-      name: 'Noah Evans',
+      name: 'Dr. Noah Evans',
       title: 'Dr.',
       subjects: ['Biología'],
-      universities: ['FIME UANL'],
-      photoUrl: 'https://placehold.co/40x40'
-    },
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.0,
+      reviewCount: 9,
+      departmentName: 'Biología',
+      universities: ['FIME UANL']
+    }
   ];
 }
 ---
 
-<MainLayout title="Inicio">
-  <div class="w-full mx-auto max-w-5xl space-y-6">
+<MainLayout title="RateMyProfs - Inicio">
+  <main class="max-w-6xl mx-auto px-4 py-10">
+    <section class="mb-8">
+      <h1 class="text-2xl font-semibold text-gray-900 mb-4">
+        Explora profesores
+      </h1>
 
-    <div class="bg-green-50 rounded-2xl px-6 py-5">
-      <input
-        id="search"
-        type="text"
-        placeholder="Buscar un profesor por nombre, materia o universidad"
-        class="w-full rounded-full border border-green-100 bg-white/70 px-5 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-      />
-    </div>
+      <!-- Barra de búsqueda -->
+      <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Buscar un profesor por nombre, materia o universidad"
+          class="w-full rounded-full border border-gray-200 px-5 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+        />
+      </div>
 
+      <!-- Filtros 'falsos' solo de UI (si quieres luego los conectamos) -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="px-3 py-1.5 text-xs rounded-full border border-gray-200 bg-white hover:bg-gray-50">
+          Asignatura
+        </button>
+        <button class="px-3 py-1.5 text-xs rounded-full border border-gray-200 bg-white hover:bg-gray-50">
+          Universidad
+        </button>
+        <button class="px-3 py-1.5 text-xs rounded-full border border-gray-200 bg-white hover:bg-gray-50">
+          Calificación
+        </button>
+      </div>
+    </section>
 
-    <div class="flex flex-wrap gap-3">
-      <select
-        id="filter-subject"
-        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
-      >
-        <option>Asignatura</option>
-        <option>Informática</option>
-        <option>Matemáticas</option>
-        <option>Física</option>
-        <option>Química</option>
-        <option>Biología</option>
-      </select>
+    <section class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <header class="border-b border-gray-100 px-6 py-3">
+        <h2 class="text-base font-semibold text-gray-800">Profesores</h2>
+        {hasError && (
+          <p class="mt-1 text-xs text-red-500">
+            No se pudo conectar al backend. Mostrando datos de ejemplo.
+          </p>
+        )}
+      </header>
 
-      <select
-        id="filter-university"
-        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
-      >
-        <option>Universidad</option>
-        <option>FIME UANL</option>
-      </select>
-    </div>
-
-  
-    <h3 class="text-xl font-bold text-gray-900">Profesores</h3>
-
- 
-    <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <table id="prof-table" class="w-full text-left">
-        <thead class="bg-green-50/70 text-xs font-semibold uppercase tracking-wide text-gray-600">
-          <tr>
-            <th class="px-6 py-3">Profesor</th>
-            <th class="px-6 py-3">Asignatura</th>
-            <th class="px-6 py-3">Universidad</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {professors.map((prof) => {
-            const name =
-              (prof.title ? prof.title + ' ' : '') +
-              (prof.name ?? '');
-            const subject = Array.isArray(prof.subjects)
-              ? prof.subjects[0]
-              : prof.subjectName ?? '—';
-            const university = Array.isArray(prof.universities)
-              ? prof.universities[0]
-              : prof.universityName ?? '—';
-            const id = prof.professorId ?? prof.id;
-            const photo = prof.photoUrl ?? 'https://placehold.co/40x40';
-
-            return (
-              <tr class="hover:bg-green-50/40 transition-colors">
-                <td class="px-6 py-4 text-sm text-gray-800">
-                  <div class="flex items-center gap-3">
-                    <img
-                      src={photo}
-                      class="h-10 w-10 rounded-full object-cover"
-                      alt={name}
-                    />
-                    <a
-                      href={`/professor?id=${id}`}
-                      class="font-medium text-gray-900 hover:text-emerald-600"
-                    >
-                      {name}
-                    </a>
-                  </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-green-50 text-left text-xs font-semibold text-gray-500">
+            <tr>
+              <th class="px-6 py-3">Profesor</th>
+              <th class="px-6 py-3">Asignatura</th>
+              <th class="px-6 py-3">Universidad</th>
+              <th class="px-6 py-3">Calificación</th>
+            </tr>
+          </thead>
+          <tbody id="professorsTableBody" class="divide-y divide-gray-100">
+            {professors.map((p) => (
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4">
+                  <a
+                    href={`/profesores/${p.professorId}`}
+                    class="flex items-center gap-3 group"
+                  >
+                    <div class="h-9 w-9 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                      {p.photoUrl ? (
+                        <img
+                          src={p.photoUrl}
+                          alt={p.name}
+                          class="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span class="text-xs text-gray-500">
+                          {p.name.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-900 group-hover:text-green-600">
+                        {p.name}
+                      </p>
+                      <p class="text-xs text-gray-500">
+                        {p.departmentName ?? 'Departamento no definido'}
+                      </p>
+                    </div>
+                  </a>
                 </td>
-
-                <td class="px-6 py-4 text-sm text-gray-600">
-                  {subject}
+                <td class="px-6 py-4 text-gray-700">
+                  {p.subjects && p.subjects.length > 0 ? p.subjects[0] : '—'}
                 </td>
-
-                <td class="px-6 py-4 text-sm text-gray-600">
-                  {university}
+                <td class="px-6 py-4 text-gray-700">
+                  {p.universities && p.universities.length > 0
+                    ? p.universities[0]
+                    : '—'}
+                </td>
+                <td class="px-6 py-4">
+                  {p.averageRating == null ? (
+                    <span class="text-xs text-gray-400">Sin calificación</span>
+                  ) : (
+                    <div class="flex items-center gap-1">
+                      <div class="flex">
+                        {getStars(p.averageRating).map((filled, idx) => (
+                          <span
+                            class={filled ? 'text-yellow-400' : 'text-gray-300'}
+                            aria-hidden="true"
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <span class="ml-1 text-xs text-gray-600">
+                        {p.averageRating.toFixed(1)} ({p.reviewCount} reseñas)
+                      </span>
+                    </div>
+                  )}
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-
+  <!-- Filtro de búsqueda en el lado del cliente -->
   <script>
-    import $ from "jquery";
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('professorsTableBody');
 
-  
-    $('#search').on('input', function () {
-      const val = $(this).val().toLowerCase();
-      $('#prof-table tbody tr').each(function () {
-        $(this).toggle($(this).text().toLowerCase().includes(val));
+    if (searchInput && tableBody) {
+      searchInput.addEventListener('input', () => {
+        const term = searchInput.value.toLowerCase();
+        const rows = tableBody.querySelectorAll('tr');
+
+        rows.forEach((row) => {
+          const text = row.innerText.toLowerCase();
+          row.style.display = text.includes(term) ? '' : 'none';
+        });
       });
-    });
-
-   
-    $('select').on('change', function () {
-      const subject = $('#filter-subject').val().toString().toLowerCase();
-      const university = $('#filter-university').val().toString().toLowerCase();
-
-      $('#prof-table tbody tr').each(function () {
-        const rowText = $(this).text().toLowerCase();
-        let show = true;
-
-        if (subject !== 'asignatura' && !rowText.includes(subject)) {
-          show = false;
-        }
-
-        if (university !== 'universidad' && !rowText.includes(university)) {
-          show = false;
-        }
-
-        $(this).toggle(show);
-      });
-    });
+    }
   </script>
 </MainLayout>
