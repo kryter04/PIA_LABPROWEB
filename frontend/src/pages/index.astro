@@ -1,16 +1,208 @@
 ---
+import MainLayout from '../layouts/MainLayout.astro';
 
+// Llamamos al backend real (paginado)
+let professors: any[] = [];
+
+try {
+  const res = await fetch('http://localhost:8080/api/professors?page=0&size=10');
+  if (res.ok) {
+    const data = await res.json();
+    professors = data.content ?? [];
+  } else {
+    console.error('Error al obtener profesores:', res.status);
+  }
+} catch (error) {
+  console.error('Error fetching professors:', error);
+
+  // Datos de ejemplo si el backend no está levantado
+  professors = [
+    {
+      professorId: 1,
+      name: 'Alex Turner',
+      title: 'Dr.',
+      subjects: ['Informática'],
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.5
+    },
+    {
+      professorId: 2,
+      name: 'Olivia Bennett',
+      title: 'Prof.',
+      subjects: ['Matemáticas'],
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.8
+    },
+    {
+      professorId: 3,
+      name: 'Ethan Carter',
+      title: 'Dr.',
+      subjects: ['Física'],
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.2
+    },
+    {
+      professorId: 4,
+      name: 'Sophia Davis',
+      title: 'Prof.',
+      subjects: ['Química'],
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.6
+    },
+    {
+      professorId: 5,
+      name: 'Noah Evans',
+      title: 'Dr.',
+      subjects: ['Biología'],
+      photoUrl: 'https://placehold.co/40x40',
+      averageRating: 4.0
+    },
+  ];
+}
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout title="Inicio">
+  <div class="w-full mx-auto max-w-5xl space-y-6">
+
+    <!-- Barra de búsqueda -->
+    <div class="bg-green-50 rounded-2xl px-6 py-5">
+      <input
+        id="search"
+        type="text"
+        placeholder="Buscar un profesor por nombre, materia o universidad"
+        class="w-full rounded-full border border-green-100 bg-white/70 px-5 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+      />
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap gap-3">
+      <select
+        id="filter-subject"
+        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
+      >
+        <option>Asignatura</option>
+        <option>Informática</option>
+        <option>Matemáticas</option>
+        <option>Física</option>
+        <option>Química</option>
+        <option>Biología</option>
+      </select>
+
+      <select
+        id="filter-university"
+        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
+      >
+        <option>Universidad</option>
+        <option>FIME UANL</option>
+      </select>
+
+      <select
+        id="filter-rating"
+        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
+      >
+        <option>Calificación</option>
+        <option>&gt; 4.0</option>
+        <option>&gt; 3.0</option>
+      </select>
+    </div>
+
+    <!-- Título -->
+    <h3 class="text-xl font-bold text-gray-900">Profesores</h3>
+
+    <!-- Tabla -->
+    <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <table id="prof-table" class="w-full text-left">
+        <thead class="bg-green-50/70 text-xs font-semibold uppercase tracking-wide text-gray-600">
+          <tr>
+            <th class="px-6 py-3">Profesor</th>
+            <th class="px-6 py-3">Asignatura</th>
+            <th class="px-6 py-3">Calificación</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {professors.map((prof) => {
+            const nombreCompleto =
+              (prof.title ? prof.title + ' ' : '') + (prof.name ?? '');
+            const subject =
+              Array.isArray(prof.subjects) && prof.subjects.length > 0
+                ? prof.subjects[0]
+                : prof.subjectName ?? '—';
+            const rating = prof.averageRating ?? prof.rating ?? '—';
+
+            return (
+              <tr class="hover:bg-green-50/40 transition-colors">
+                <td class="px-6 py-4 text-sm text-gray-800">
+                  <div class="flex items-center gap-3">
+                    <img
+                      src={prof.photoUrl || 'https://placehold.co/40x40'}
+                      alt={nombreCompleto}
+                      class="h-10 w-10 rounded-full object-cover"
+                    />
+                    <a
+                      href={`/profesores/${prof.professorId ?? prof.id}`}
+                      class="font-medium text-gray-900 hover:text-emerald-600"
+                    >
+                      {nombreCompleto}
+                    </a>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                  {subject}
+                </td>
+                <td class="px-6 py-4 text-sm text-yellow-500">
+                  <span class="inline-flex items-center gap-1">
+                    <span class="text-base">★</span>
+                    <span class="text-gray-800 font-medium">{rating}</span>
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Script de búsqueda y filtros usando jQuery -->
+  <script>
+    import $ from 'jquery';
+
+    // Búsqueda en texto libre
+    $('#search').on('input', function () {
+      const val = $(this).val().toLowerCase();
+      $('#prof-table tbody tr').each(function () {
+        $(this).toggle($(this).text().toLowerCase().includes(val));
+      });
+    });
+
+    // Filtros simples en el front (por texto)
+    $('select').on('change', function () {
+      const subject = $('#filter-subject').val().toString().toLowerCase();
+      const university = $('#filter-university').val().toString().toLowerCase();
+      const ratingFilter = $('#filter-rating').val().toString();
+
+      $('#prof-table tbody tr').each(function () {
+        const rowText = $(this).text().toLowerCase();
+        const ratingText = $(this).find('td:last').text().trim().split(' ').pop();
+        const rowRating = parseFloat(ratingText) || 0;
+
+        let show = true;
+
+        if (subject !== 'asignatura' && subject !== 'asignatura v') {
+          if (!rowText.includes(subject)) show = false;
+        }
+
+        if (university !== 'universidad' && university !== 'universidad v') {
+          if (!rowText.includes(university)) show = false;
+        }
+
+        if (ratingFilter.startsWith('>')) {
+          const min = parseFloat(ratingFilter.replace('>', '').trim());
+          if (!(rowRating > min)) show = false;
+        }
+
+        $(this).toggle(show);
+      });
+    });
+  </script>
+</MainLayout>
