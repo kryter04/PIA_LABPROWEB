@@ -1,19 +1,18 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 
-// Llamamos al backend real (paginado)
-let professors: any[] = [];
+// Lista de profesores que vendrá del backend
+let professors = [];
 
 try {
-  const res = await fetch('http://localhost:8080/api/professors?page=0&size=10');
-  if (res.ok) {
-    const data = await res.json();
-    professors = data.content ?? [];
-  } else {
-    console.error('Error al obtener profesores:', res.status);
-  }
+  // Usamos el proxy de Astro: /api → http://localhost:8080
+  const res = await fetch('/api/professors?page=0&size=10');
+  const data = await res.json();
+
+  // La API regresa un objeto con "content"
+  professors = data?.content ?? [];
 } catch (error) {
-  console.error('Error fetching professors:', error);
+  console.error('Error al obtener profesores:', error);
 
   // Datos de ejemplo si el backend no está levantado
   professors = [
@@ -22,40 +21,40 @@ try {
       name: 'Alex Turner',
       title: 'Dr.',
       subjects: ['Informática'],
-      photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.5
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
     },
     {
       professorId: 2,
       name: 'Olivia Bennett',
       title: 'Prof.',
       subjects: ['Matemáticas'],
-      photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.8
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
     },
     {
       professorId: 3,
       name: 'Ethan Carter',
       title: 'Dr.',
       subjects: ['Física'],
-      photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.2
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
     },
     {
       professorId: 4,
       name: 'Sophia Davis',
       title: 'Prof.',
       subjects: ['Química'],
-      photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.6
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
     },
     {
       professorId: 5,
       name: 'Noah Evans',
       title: 'Dr.',
       subjects: ['Biología'],
-      photoUrl: 'https://placehold.co/40x40',
-      averageRating: 4.0
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
     },
   ];
 }
@@ -70,11 +69,11 @@ try {
         id="search"
         type="text"
         placeholder="Buscar un profesor por nombre, materia o universidad"
-        class="w-full rounded-full border border-green-100 bg-white/70 px-5 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+        class="w-full rounded-full border border-green-100 bg-white/70 px-5 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
       />
     </div>
 
-    <!-- Filtros -->
+    <!-- Filtros (solo Asignatura y Universidad, sin calificación) -->
     <div class="flex flex-wrap gap-3">
       <select
         id="filter-subject"
@@ -95,15 +94,6 @@ try {
         <option>Universidad</option>
         <option>FIME UANL</option>
       </select>
-
-      <select
-        id="filter-rating"
-        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
-      >
-        <option>Calificación</option>
-        <option>&gt; 4.0</option>
-        <option>&gt; 3.0</option>
-      </select>
     </div>
 
     <!-- Título -->
@@ -116,44 +106,47 @@ try {
           <tr>
             <th class="px-6 py-3">Profesor</th>
             <th class="px-6 py-3">Asignatura</th>
-            <th class="px-6 py-3">Calificación</th>
+            <th class="px-6 py-3">Universidad</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           {professors.map((prof) => {
-            const nombreCompleto =
-              (prof.title ? prof.title + ' ' : '') + (prof.name ?? '');
-            const subject =
-              Array.isArray(prof.subjects) && prof.subjects.length > 0
-                ? prof.subjects[0]
-                : prof.subjectName ?? '—';
-            const rating = prof.averageRating ?? prof.rating ?? '—';
+            const name =
+              (prof.title ? prof.title + ' ' : '') +
+              (prof.name ?? '');
+            const subject = Array.isArray(prof.subjects)
+              ? prof.subjects[0]
+              : prof.subjectName ?? '—';
+            const university = Array.isArray(prof.universities)
+              ? prof.universities[0]
+              : prof.universityName ?? '—';
+            const id = prof.professorId ?? prof.id;
+            const photo = prof.photoUrl ?? 'https://placehold.co/40x40';
 
             return (
               <tr class="hover:bg-green-50/40 transition-colors">
                 <td class="px-6 py-4 text-sm text-gray-800">
                   <div class="flex items-center gap-3">
                     <img
-                      src={prof.photoUrl || 'https://placehold.co/40x40'}
-                      alt={nombreCompleto}
+                      src={photo}
                       class="h-10 w-10 rounded-full object-cover"
+                      alt={name}
                     />
                     <a
-                      href={`/profesores/${prof.professorId ?? prof.id}`}
+                      href={`/profesores/${id}`}
                       class="font-medium text-gray-900 hover:text-emerald-600"
                     >
-                      {nombreCompleto}
+                      {name}
                     </a>
                   </div>
                 </td>
+
                 <td class="px-6 py-4 text-sm text-gray-600">
                   {subject}
                 </td>
-                <td class="px-6 py-4 text-sm text-yellow-500">
-                  <span class="inline-flex items-center gap-1">
-                    <span class="text-base">★</span>
-                    <span class="text-gray-800 font-medium">{rating}</span>
-                  </span>
+
+                <td class="px-6 py-4 text-sm text-gray-600">
+                  {university}
                 </td>
               </tr>
             );
@@ -163,11 +156,11 @@ try {
     </div>
   </div>
 
-  <!-- Script de búsqueda y filtros usando jQuery -->
+  <!-- Script de búsqueda y filtros -->
   <script>
-    import $ from 'jquery';
+    import $ from "jquery";
 
-    // Búsqueda en texto libre
+    // Búsqueda por texto
     $('#search').on('input', function () {
       const val = $(this).val().toLowerCase();
       $('#prof-table tbody tr').each(function () {
@@ -175,30 +168,21 @@ try {
       });
     });
 
-    // Filtros simples en el front (por texto)
+    // Filtros por asignatura y universidad
     $('select').on('change', function () {
       const subject = $('#filter-subject').val().toString().toLowerCase();
       const university = $('#filter-university').val().toString().toLowerCase();
-      const ratingFilter = $('#filter-rating').val().toString();
 
       $('#prof-table tbody tr').each(function () {
         const rowText = $(this).text().toLowerCase();
-        const ratingText = $(this).find('td:last').text().trim().split(' ').pop();
-        const rowRating = parseFloat(ratingText) || 0;
-
         let show = true;
 
-        if (subject !== 'asignatura' && subject !== 'asignatura v') {
-          if (!rowText.includes(subject)) show = false;
+        if (subject !== 'asignatura' && !rowText.includes(subject)) {
+          show = false;
         }
 
-        if (university !== 'universidad' && university !== 'universidad v') {
-          if (!rowText.includes(university)) show = false;
-        }
-
-        if (ratingFilter.startsWith('>')) {
-          const min = parseFloat(ratingFilter.replace('>', '').trim());
-          if (!(rowRating > min)) show = false;
+        if (university !== 'universidad' && !rowText.includes(university)) {
+          show = false;
         }
 
         $(this).toggle(show);
