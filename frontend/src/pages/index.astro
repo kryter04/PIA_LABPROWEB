@@ -1,20 +1,17 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 
-// Lista de profesores que vendrá del backend
 let professors = [];
 
 try {
-  // Usamos el proxy de Astro: /api → http://localhost:8080
+
   const res = await fetch('/api/professors?page=0&size=10');
   const data = await res.json();
 
-  // La API regresa un objeto con "content"
   professors = data?.content ?? [];
 } catch (error) {
   console.error('Error al obtener profesores:', error);
 
-  // Datos de ejemplo si el backend no está levantado
   professors = [
     {
       professorId: 1,
@@ -63,7 +60,6 @@ try {
 <MainLayout title="Inicio">
   <div class="w-full mx-auto max-w-5xl space-y-6">
 
-    <!-- Barra de búsqueda -->
     <div class="bg-green-50 rounded-2xl px-6 py-5">
       <input
         id="search"
@@ -73,7 +69,7 @@ try {
       />
     </div>
 
-    <!-- Filtros (solo Asignatura y Universidad, sin calificación) -->
+
     <div class="flex flex-wrap gap-3">
       <select
         id="filter-subject"
@@ -96,10 +92,10 @@ try {
       </select>
     </div>
 
-    <!-- Título -->
+  
     <h3 class="text-xl font-bold text-gray-900">Profesores</h3>
 
-    <!-- Tabla -->
+ 
     <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
       <table id="prof-table" class="w-full text-left">
         <thead class="bg-green-50/70 text-xs font-semibold uppercase tracking-wide text-gray-600">
@@ -156,11 +152,11 @@ try {
     </div>
   </div>
 
-  <!-- Script de búsqueda y filtros -->
+
   <script>
     import $ from "jquery";
 
-    // Búsqueda por texto
+  
     $('#search').on('input', function () {
       const val = $(this).val().toLowerCase();
       $('#prof-table tbody tr').each(function () {
@@ -168,7 +164,7 @@ try {
       });
     });
 
-    // Filtros por asignatura y universidad
+   
     $('select').on('change', function () {
       const subject = $('#filter-subject').val().toString().toLowerCase();
       const university = $('#filter-university').val().toString().toLowerCase();
