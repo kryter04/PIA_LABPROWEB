@@ -1,16 +1,188 @@
 ---
+import MainLayout from '../layouts/MainLayout.astro';
 
+let professors = [];
+
+try {
+
+  const res = await fetch('/api/professors?page=0&size=10');
+  const data = await res.json();
+
+  professors = data?.content ?? [];
+} catch (error) {
+  console.error('Error al obtener profesores:', error);
+
+  professors = [
+    {
+      professorId: 1,
+      name: 'Alex Turner',
+      title: 'Dr.',
+      subjects: ['Informática'],
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
+    },
+    {
+      professorId: 2,
+      name: 'Olivia Bennett',
+      title: 'Prof.',
+      subjects: ['Matemáticas'],
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
+    },
+    {
+      professorId: 3,
+      name: 'Ethan Carter',
+      title: 'Dr.',
+      subjects: ['Física'],
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
+    },
+    {
+      professorId: 4,
+      name: 'Sophia Davis',
+      title: 'Prof.',
+      subjects: ['Química'],
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
+    },
+    {
+      professorId: 5,
+      name: 'Noah Evans',
+      title: 'Dr.',
+      subjects: ['Biología'],
+      universities: ['FIME UANL'],
+      photoUrl: 'https://placehold.co/40x40'
+    },
+  ];
+}
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout title="Inicio">
+  <div class="w-full mx-auto max-w-5xl space-y-6">
+
+    <div class="bg-green-50 rounded-2xl px-6 py-5">
+      <input
+        id="search"
+        type="text"
+        placeholder="Buscar un profesor por nombre, materia o universidad"
+        class="w-full rounded-full border border-green-100 bg-white/70 px-5 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+      />
+    </div>
+
+
+    <div class="flex flex-wrap gap-3">
+      <select
+        id="filter-subject"
+        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
+      >
+        <option>Asignatura</option>
+        <option>Informática</option>
+        <option>Matemáticas</option>
+        <option>Física</option>
+        <option>Química</option>
+        <option>Biología</option>
+      </select>
+
+      <select
+        id="filter-university"
+        class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm focus:outline-none"
+      >
+        <option>Universidad</option>
+        <option>FIME UANL</option>
+      </select>
+    </div>
+
+  
+    <h3 class="text-xl font-bold text-gray-900">Profesores</h3>
+
+ 
+    <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <table id="prof-table" class="w-full text-left">
+        <thead class="bg-green-50/70 text-xs font-semibold uppercase tracking-wide text-gray-600">
+          <tr>
+            <th class="px-6 py-3">Profesor</th>
+            <th class="px-6 py-3">Asignatura</th>
+            <th class="px-6 py-3">Universidad</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {professors.map((prof) => {
+            const name =
+              (prof.title ? prof.title + ' ' : '') +
+              (prof.name ?? '');
+            const subject = Array.isArray(prof.subjects)
+              ? prof.subjects[0]
+              : prof.subjectName ?? '—';
+            const university = Array.isArray(prof.universities)
+              ? prof.universities[0]
+              : prof.universityName ?? '—';
+            const id = prof.professorId ?? prof.id;
+            const photo = prof.photoUrl ?? 'https://placehold.co/40x40';
+
+            return (
+              <tr class="hover:bg-green-50/40 transition-colors">
+                <td class="px-6 py-4 text-sm text-gray-800">
+                  <div class="flex items-center gap-3">
+                    <img
+                      src={photo}
+                      class="h-10 w-10 rounded-full object-cover"
+                      alt={name}
+                    />
+                    <a
+                      href={`/profesores/${id}`}
+                      class="font-medium text-gray-900 hover:text-emerald-600"
+                    >
+                      {name}
+                    </a>
+                  </div>
+                </td>
+
+                <td class="px-6 py-4 text-sm text-gray-600">
+                  {subject}
+                </td>
+
+                <td class="px-6 py-4 text-sm text-gray-600">
+                  {university}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <script>
+    import $ from "jquery";
+
+  
+    $('#search').on('input', function () {
+      const val = $(this).val().toLowerCase();
+      $('#prof-table tbody tr').each(function () {
+        $(this).toggle($(this).text().toLowerCase().includes(val));
+      });
+    });
+
+   
+    $('select').on('change', function () {
+      const subject = $('#filter-subject').val().toString().toLowerCase();
+      const university = $('#filter-university').val().toString().toLowerCase();
+
+      $('#prof-table tbody tr').each(function () {
+        const rowText = $(this).text().toLowerCase();
+        let show = true;
+
+        if (subject !== 'asignatura' && !rowText.includes(subject)) {
+          show = false;
+        }
+
+        if (university !== 'universidad' && !rowText.includes(university)) {
+          show = false;
+        }
+
+        $(this).toggle(show);
+      });
+    });
+  </script>
+</MainLayout>

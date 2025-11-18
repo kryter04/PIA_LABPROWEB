@@ -1,0 +1,513 @@
+---
+// src/pages/auth.astro
+// Pantalla unificada de Login, Registro y Recuperación de Contraseña
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Iniciar Sesión | Registrarse">
+  <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      
+      <div class="flex justify-center space-x-4 mb-8">
+        <button id="loginTab" class="px-6 py-2 text-lg font-semibold rounded-lg transition-colors text-white bg-blue-600">
+          Iniciar Sesión
+        </button>
+        <button id="registerTab" class="px-6 py-2 text-lg 
+font-semibold rounded-lg transition-colors text-gray-600 bg-gray-100 hover:bg-gray-200">
+          Registrarse
+        </button>
+      </div>
+
+      <div id="loginForm" class="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-6">
+          Bienvenido de nuevo
+        </h2>
+        
+        <form id="loginFormElement" class="space-y-5">
+          <div>
+            <label for="login-email" class="block text-sm font-medium text-gray-700">
+              Correo electrónico
+            </label>
+            <input 
+              type="email" 
+              id="login-email" 
+              name="email" 
+              required
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="tu@correo.com"
+            />
+          </div>
+
+          <div>
+            <label for="login-password" class="block text-sm font-medium text-gray-700">
+              Contraseña
+            </label>
+            <input 
+              type="password" 
+              id="login-password" 
+              name="password" 
+              required
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div id="login-error" class="hidden p-3 rounded-lg bg-red-50 border border-red-200">
+            <p class="text-sm text-red-600"></p>
+          </div>
+
+          <button 
+            type="submit"
+            id="loginSubmitBtn"
+            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <span id="loginBtnText">Iniciar Sesión</span>
+            <span id="loginBtnSpinner" class="hidden ml-2">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+          </button>
+
+          <div class="text-center">
+            <a href="#" id="forgotPasswordLink" class="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <div id="registerForm" class="hidden bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-6">
+          Crea tu cuenta
+        </h2>
+        
+        <form id="registerFormElement" class="space-y-5">
+          <div>
+            <label for="register-name" class="block text-sm font-medium text-gray-700">
+              Nombre completo
+            </label>
+            <input 
+              type="text" 
+              id="register-name" 
+              name="name" 
+              required
+              minlength="2"
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Juan Pérez"
+            />
+          </div>
+
+          <div>
+            <label for="register-email" class="block text-sm font-medium text-gray-700">
+              Correo electrónico
+            </label>
+            <input 
+              type="email" 
+              id="register-email" 
+              name="email" 
+              required
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="tu@correo.com"
+            />
+          </div>
+
+          
+          <div>
+            <label for="register-password" class="block text-sm font-medium text-gray-700">
+              Contraseña
+            </label>
+            <input 
+              type="password" 
+              id="register-password" 
+              name="password" 
+              required
+              minlength="8"
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="••••••••"
+            />
+            <p class="mt-1 text-xs text-gray-500">Mínimo 8 caracteres</p>
+          </div>
+
+          <div>
+            <label for="register-password-confirm" class="block text-sm font-medium text-gray-700">
+              Confirmar contraseña
+            </label>
+            <input 
+              type="password" 
+              id="register-password-confirm" 
+              name="passwordConfirm" 
+              required
+              minlength="8"
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div id="register-error" class="hidden p-3 rounded-lg bg-red-50 border border-red-200">
+            <p class="text-sm text-red-600"></p>
+          </div>
+
+          <button 
+            type="submit"
+            id="registerSubmitBtn"
+            class="w-full flex 
+justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+          >
+            <span id="registerBtnText">Crear cuenta</span>
+            <span id="registerBtnSpinner" class="hidden ml-2">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" 
+r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+          </button>
+
+          <p class="text-xs text-center text-gray-500">
+            Al registrarte, aceptas nuestros 
+            <a href="#" class="font-medium text-green-600 hover:underline">Términos de servicio</a>
+          </p>
+        </form>
+      </div>
+
+      <div id="recoveryForm" class="hidden bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-6">
+          Recuperar Contraseña
+        </h2>
+        <form id="recoveryFormElement" class="space-y-5">
+          <p class="text-sm text-gray-600">
+            Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+          </p>
+          <div>
+            <label for="recovery-email" class="block text-sm font-medium text-gray-700">
+              Correo electrónico
+            </label>
+            <input 
+              type="email" 
+              id="recovery-email" 
+              name="email" 
+              required
+              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="tu@correo.com"
+            />
+          </div>
+
+          <div id="recovery-error" class="hidden p-3 rounded-lg bg-red-50 border border-red-200">
+            <p class="text-sm text-red-600"></p>
+          </div>
+          <div id="recovery-success" class="hidden p-3 rounded-lg bg-green-50 border border-green-200">
+            <p class="text-sm text-green-600 font-medium">
+              Si tu correo existe en nuestro sistema, recibirás instrucciones en tu bandeja de entrada.
+            </p>
+          </div>
+
+          <button 
+            type="submit"
+            id="recoverySubmitBtn"
+            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <span id="recoveryBtnText">Enviar Enlace</span>
+            <span id="recoveryBtnSpinner" class="hidden ml-2">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+          </button>
+          
+          <div class="text-center">
+            <a href="#" id="backToLoginLink" class="text-sm text-gray-600 hover:text-gray-700 hover:underline">
+              ← Regresar a Iniciar Sesión
+            </a>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    import { API_BASE_URL } from '../config/api'; // Asumiendo que existe un archivo de configuración
+    import $ from 'jquery';
+
+    // ===================================
+    // ELEMENTOS DEL DOM
+    // ===================================
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const recoveryForm = document.getElementById('recoveryForm'); // Nuevo
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink'); // Nuevo
+    const backToLoginLink = document.getElementById('backToLoginLink'); // Nuevo
+
+    // ===================================
+    // FUNCIÓN PARA CAMBIAR A VISTA DE LOGIN
+    // ===================================
+    const switchToLogin = () => {
+      // Estilos para loginTab activo
+      if (loginTab) {
+        loginTab.className = 'px-6 py-2 text-lg font-semibold rounded-lg transition-colors text-white bg-blue-600';
+      }
+      // Estilos para registerTab inactivo
+      if (registerTab) {
+        registerTab.className = 'px-6 py-2 text-lg font-semibold rounded-lg transition-colors text-gray-600 bg-gray-100 hover:bg-gray-200';
+      }
+      loginForm?.classList.remove('hidden');
+      registerForm?.classList.add('hidden');
+      recoveryForm?.classList.add('hidden'); // Oculta recuperación
+    };
+
+    // ===================================
+    // MANEJO DE VISTAS (TABS y ENLACES)
+    // ===================================
+    loginTab?.addEventListener('click', switchToLogin);
+
+    registerTab?.addEventListener('click', () => {
+      // Estilos para registerTab activo
+      if (registerTab) {
+        registerTab.className = 'px-6 py-2 text-lg font-semibold rounded-lg transition-colors text-white bg-green-600';
+      }
+      // Estilos para loginTab inactivo
+      if (loginTab) {
+        loginTab.className = 'px-6 py-2 text-lg font-semibold rounded-lg transition-colors text-gray-600 bg-gray-100 hover:bg-gray-200';
+      }
+      registerForm?.classList.remove('hidden');
+      loginForm?.classList.add('hidden');
+      recoveryForm?.classList.add('hidden'); // Oculta recuperación
+    });
+
+    // Enlace "¿Olvidaste tu contraseña?"
+    forgotPasswordLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Oculta tabs (no hay tab para recuperación)
+      loginTab?.classList.add('hidden');
+      registerTab?.classList.add('hidden');
+
+      // Muestra solo el formulario de recuperación
+      loginForm?.classList.add('hidden');
+      registerForm?.classList.add('hidden');
+      recoveryForm?.classList.remove('hidden');
+    });
+
+    // Enlace "Regresar a Iniciar Sesión" en el formulario de recuperación
+    backToLoginLink?.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Muestra tabs de nuevo
+        loginTab?.classList.remove('hidden');
+        registerTab?.classList.remove('hidden');
+        
+        switchToLogin(); // Regresa a la vista de login
+    });
+
+
+    // ===================================
+    // LÓGICA DE FORMULARIO DE LOGIN
+    // ===================================
+    const loginFormElement = document.getElementById('loginFormElement');
+    loginFormElement?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('loginSubmitBtn') as HTMLButtonElement;
+      const btnText = document.getElementById('loginBtnText');
+      const btnSpinner = document.getElementById('loginBtnSpinner');
+      const errorDiv = document.getElementById('login-error');
+      const errorMsg = errorDiv?.querySelector('p');
+
+      // 1. Ocultar error previo y deshabilitar botón
+      errorDiv?.classList.add('hidden');
+      submitBtn.disabled = true;
+      btnText?.classList.add('hidden');
+      btnSpinner?.classList.remove('hidden');
+
+      const formData = new FormData(loginFormElement as HTMLFormElement);
+      const data = {
+        email: formData.get('email'),
+        password: formData.get('password')
+      };
+
+      try {
+        // 2. Llamada a la API de Login
+        const response = await $.ajax({
+          url: `${API_BASE_URL}/login`,
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data)
+        });
+
+        // 3. Éxito: Guardar token y redirigir
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response));
+
+        // Redirigir según el rol
+        if (response.role === 'Admin') {
+          window.location.href = '/admin/dashboard';
+        } else {
+          window.location.href = '/';
+        }
+      } catch (error: any) {
+        // 4. Error: Mostrar mensaje de error
+        if (errorMsg) {
+          if (error.status === 401) {
+            errorMsg.textContent = 'Correo o contraseña incorrectos';
+          } else if (error.responseJSON?.message) {
+            errorMsg.textContent = error.responseJSON.message;
+          } else {
+            errorMsg.textContent = 'Error al iniciar sesión. Intenta de nuevo.';
+          }
+        }
+        errorDiv?.classList.remove('hidden');
+      } finally {
+        // 5. Restablecer botón
+        submitBtn.disabled = false;
+        btnText?.classList.remove('hidden');
+        btnSpinner?.classList.add('hidden');
+      }
+    });
+
+    // ===================================
+    // LÓGICA DE FORMULARIO DE REGISTRO
+    // ===================================
+    const registerFormElement = document.getElementById('registerFormElement');
+    registerFormElement?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('registerSubmitBtn') as HTMLButtonElement;
+      const btnText = document.getElementById('registerBtnText');
+      const btnSpinner = document.getElementById('registerBtnSpinner');
+      const errorDiv = document.getElementById('register-error');
+      const errorMsg = errorDiv?.querySelector('p');
+
+      // 1. Ocultar error previo y deshabilitar botón
+      errorDiv?.classList.add('hidden');
+
+      const formData = new FormData(registerFormElement as HTMLFormElement);
+      const password = formData.get('password');
+      const passwordConfirm = formData.get('passwordConfirm');
+
+      // 2. Validar que las contraseñas coincidan (Validación de Front-end)
+      if (password !== passwordConfirm) {
+        if (errorMsg) {
+          errorMsg.textContent = 'Las contraseñas no coinciden';
+        }
+        errorDiv?.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      btnText?.classList.add('hidden');
+      btnSpinner?.classList.remove('hidden');
+
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        password: password
+      };
+      
+      try {
+        // 3. Llamada a la API de Registro
+        const response = await $.ajax({
+          url: `${API_BASE_URL}/register`,
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data)
+        });
+
+        // 4. Éxito: Guardar token y redirigir
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response));
+
+        window.location.href = '/';
+      } catch (error: any) {
+        // 5. Error: Mostrar mensaje de error
+        if (errorMsg) {
+          if (error.status === 409) {
+            errorMsg.textContent = 'El correo electrónico ya está registrado';
+          } else if (error.responseJSON?.message) {
+            errorMsg.textContent = error.responseJSON.message;
+          } else if (error.responseJSON?.errors) {
+            // Errores de validación detallados (ej. contraseña muy corta)
+            const errors = Object.values(error.responseJSON.errors).join(', ');
+            errorMsg.textContent = errors as string;
+          } else {
+            errorMsg.textContent = 'Error al crear la cuenta. Intenta de nuevo.';
+          }
+        }
+        errorDiv?.classList.remove('hidden');
+      } finally {
+        // 6. Restablecer botón
+        submitBtn.disabled = false;
+        btnText?.classList.remove('hidden');
+        btnSpinner?.classList.add('hidden');
+      }
+    });
+
+    // ===================================
+    // LÓGICA DE RECUPERACIÓN DE CONTRASEÑA
+    // ===================================
+    const recoveryFormElement = document.getElementById('recoveryFormElement');
+    recoveryFormElement?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('recoverySubmitBtn') as HTMLButtonElement;
+      const btnText = document.getElementById('recoveryBtnText');
+      const btnSpinner = document.getElementById('recoveryBtnSpinner');
+      const errorDiv = document.getElementById('recovery-error');
+      const errorMsg = errorDiv?.querySelector('p');
+      const successDiv = document.getElementById('recovery-success');
+      
+      // 1. Ocultar mensajes previos y deshabilitar botón
+      errorDiv?.classList.add('hidden');
+      successDiv?.classList.add('hidden');
+      submitBtn.disabled = true;
+      btnText?.classList.add('hidden');
+      btnSpinner?.classList.remove('hidden');
+
+      const formData = new FormData(recoveryFormElement as HTMLFormElement);
+      const data = {
+        email: formData.get('email')
+      };
+
+      try {
+        // 2. Llamada a la API para iniciar la recuperación
+        // Nota: Por seguridad, el backend debe retornar 200 OK incluso si el email no existe (para evitar enumeración de usuarios).
+        const response = await $.ajax({
+          url: `${API_BASE_URL}/password/recovery`,
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data)
+        });
+
+        // 3. Muestra el mensaje de éxito (que es genérico)
+        successDiv?.classList.remove('hidden');
+        
+        // 4. Se recomienda redirigir al usuario a una página de "Revisa tu email"
+        // Por ahora, solo se muestra el mensaje de éxito y se limpia el input
+        const emailInput = document.getElementById('recovery-email') as HTMLInputElement;
+        if(emailInput) {
+            emailInput.value = '';
+        }
+
+      } catch (error: any) {
+        // 5. Muestra errores (ej. error de conexión o de formato de email)
+        if (errorMsg) {
+          if (error.responseJSON?.message) {
+            // El backend ya maneja el caso de email no encontrado con un mensaje genérico.
+            // Si llega un error aquí, es probablemente un error 400 (Bad Request/Validación)
+            errorMsg.textContent = error.responseJSON.message;
+          } else {
+            errorMsg.textContent = 'Ocurrió un error al procesar tu solicitud.';
+          }
+        }
+        errorDiv?.classList.remove('hidden');
+      } finally {
+        // 6. Restablecer botón
+        submitBtn.disabled = false;
+        btnText?.classList.remove('hidden');
+        btnSpinner?.classList.add('hidden');
+      }
+    });
+  </script>
+</MainLayout>
