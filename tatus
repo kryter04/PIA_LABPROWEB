@@ -1,0 +1,5 @@
+[33m496859e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge branch 'main' of https://github.com/KRYTER04/PIA_LABPROWEB
+[33m270d3b8[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m se realizo el Dashboard de Analíticas, CRUD de Usuario, CRUD de Profesores
+[33m9e76ef1[m Merge branch 'main' of https://github.com/KRYTER04/PIA_LABPROWEB
+[33m98c82cf[m refactor(auth): Agrega la página de autenticación unificada (auth.astro).
+[33med625fa[m agregue mi puerto para poder entrar sin complicaciones y agregue al docker-compose el valor de la base de datos de recuperar contraseña
