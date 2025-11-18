@@ -21,8 +21,8 @@ const getStars = (rating: number | null | undefined) =>
   Array.from({ length: 5 }, (_, i) => i < Math.round(rating ?? 0));
 
 try {
-  // Usamos el proxy de Astro → /api → backend (8080)
-  const res = await fetch('/api/professors?page=0&size=50');
+  // Usamos la URL completa del backend para SSR (server-side rendering)
+  const res = await fetch('http://localhost:8080/api/professors?page=0&size=50');
 
   if (res.ok) {
     const data = await res.json();
