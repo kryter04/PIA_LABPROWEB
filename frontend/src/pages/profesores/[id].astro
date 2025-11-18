@@ -1,7 +1,7 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 
-// Esta ruta se resuelve en tiempo de ejecución (no estática)
+
 export const prerender = false;
 
 const { id } = Astro.params;
@@ -36,7 +36,7 @@ type ProfessorDetail = {
 let professor: ProfessorDetail | null = null;
 let hasError = false;
 
-// Helpers
+
 const getStars = (rating: number | null | undefined) =>
   Array.from({ length: 5 }, (_, i) => i < Math.round(rating ?? 0));
 
@@ -66,7 +66,7 @@ function buildRatingStats(reviews: Review[] = []) {
   });
 }
 
-// 🔥 AQUÍ SOLO USAMOS LA API REAL
+
 try {
   const res = await fetch(`/api/professors/${id}`);
 
