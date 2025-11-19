@@ -67,6 +67,7 @@ public class ReviewService {
                 .status(pendingStatus)
                 .rating(request.getRating())
                 .comment(request.getComment())
+                .isAnonymous(request.getIsAnonymous())
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -102,6 +103,7 @@ public class ReviewService {
                 .subjectName(subject.getName())
                 .rating(savedReview.getRating())
                 .comment(savedReview.getComment())
+                .isAnonymous(savedReview.getIsAnonymous())
                 .imageUrls(imageUrls)
                 .likeCount(0L)  // Nueva reseña, sin votos
                 .dislikeCount(0L)

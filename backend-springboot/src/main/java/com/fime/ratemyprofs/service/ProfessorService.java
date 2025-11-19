@@ -14,9 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,6 +70,13 @@ public class ProfessorService {
     }
 
     private ProfessorResponse mapToProfessorResponse(Professor professor) {
+        // Obtener solo las reseñas aprobadas desde el repositorio
+        List<ReviewResponse> approvedReviews = reviewRepository
+                .findByProfessorProfessorIdAndStatus_StatusName(professor.getProfessorId(), "Approved")
+                .stream()
+                .map(this::mapToReviewResponse)
+                .collect(Collectors.toList());
+
         return ProfessorResponse.builder()
                 .professorId(professor.getProfessorId())
                 .name(professor.getName())
@@ -86,6 +91,7 @@ public class ProfessorService {
                 .subjects(professor.getSubjects().stream()
                         .map(s -> s.getName())
                         .collect(Collectors.toList()))
+                .reviews(approvedReviews)
                 .build();
     }
 

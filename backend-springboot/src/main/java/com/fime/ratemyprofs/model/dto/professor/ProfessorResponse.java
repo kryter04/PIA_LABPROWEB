@@ -1,5 +1,6 @@
 package com.fime.ratemyprofs.model.dto.professor;
 
+import com.fime.ratemyprofs.model.dto.review.ReviewResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +23,5 @@ public class ProfessorResponse {
     private Long reviewCount;
     private List<String> universities;
     private List<String> subjects;
+    private List<ReviewResponse> reviews;
 }
