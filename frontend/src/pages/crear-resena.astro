@@ -228,9 +228,11 @@ import MainLayout from '../layouts/MainLayout.astro';
                 subjectId: parseInt((document.getElementById('subject-select') as HTMLSelectElement).value),
                 rating: parseInt(rating),
                 comment: (document.getElementById('comment') as HTMLTextAreaElement).value,
-                isAnonymous: (document.getElementById('anonymous') as HTMLInputElement).checked,
+                isAnonymous: (document.getElementById('anonymous') as HTMLInputElement).checked === true,
                 imageUrls: [] // Por ahora vacío, feature futura
             };
+            
+            console.log('sending review data:', formData);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/reviews`, {
