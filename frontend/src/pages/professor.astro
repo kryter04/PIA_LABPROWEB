@@ -161,11 +161,12 @@ import Modal from '../components/Modal.astro';
         // Reseñas
         renderReviews(data.reviews || []);
         
-        // Llenar select de materias
+        // Llenar select de materias (limpiar primero)
         const subjectSelect = document.getElementById('subject-select') as HTMLSelectElement;
+        subjectSelect.innerHTML = '<option value="">Selecciona una materia</option>';
         data.subjects?.forEach((subject: string, index: number) => {
             const option = document.createElement('option');
-            option.value = (index + 1).toString(); // Simplificado, debería ser el ID real
+            option.value = (index + 1).toString();
             option.textContent = subject;
             subjectSelect.appendChild(option);
         });
@@ -205,7 +206,6 @@ import Modal from '../components/Modal.astro';
         return stars;
     }
     
-    // Calcular y renderizar distribución de calificaciones
     function renderRatingDistribution(reviews: any[]) {
         const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         reviews.forEach(review => {
@@ -216,6 +216,7 @@ import Modal from '../components/Modal.astro';
         
         const total = reviews.length || 1;
         const container = document.getElementById('rating-distribution')!;
+        container.innerHTML = '';
         
         [5, 4, 3, 2, 1].forEach(rating => {
             const count = distribution[rating as keyof typeof distribution];
