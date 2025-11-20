@@ -99,11 +99,18 @@ public class ProfessorService {
         Long likeCount = reviewRepository.countLikesByReviewId(review.getReviewId());
         Long dislikeCount = reviewRepository.countDislikesByReviewId(review.getReviewId());
 
+        Integer userId = null;
+        String userName = "Anonymous";
+        
+        if (review.getUser() != null) {
+            userId = review.getIsAnonymous() ? null : review.getUser().getUserId();
+            userName = review.getIsAnonymous() ? "Anonymous" : review.getUser().getName();
+        }
+
         return ReviewResponse.builder()
                 .reviewId(review.getReviewId())
-                .userId(review.getIsAnonymous() ? null : (review.getUser() != null ? review.getUser().getUserId() : null))
-                .userName(review.getIsAnonymous() ? "Anonymous" : 
-                         (review.getUser() != null ? review.getUser().getName() : "Unknown"))
+                .userId(userId)
+                .userName(userName)
                 .professorId(review.getProfessor().getProfessorId())
                 .professorName(review.getProfessor().getName())
                 .subjectId(review.getSubject().getSubjectId())

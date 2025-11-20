@@ -7,15 +7,25 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateProfessorRequest {
     
-    @NotBlank(message = "El nombre del profesor es requerido")
+    @NotBlank(message = "Professor name is required")
     private String name;
     
-    @NotNull(message = "El ID de la universidad es requerido")
-    private Long universityId;
+    private String title;
+    
+    private String departmentName;
+    
+    private String photoUrl;
+    
+    @NotNull(message = "At least one university is required")
+    private List<Integer> universityIds;
+    
+    private List<Integer> subjectIds;
 }

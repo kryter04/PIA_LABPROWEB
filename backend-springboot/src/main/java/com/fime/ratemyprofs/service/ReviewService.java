@@ -117,19 +117,25 @@ public class ReviewService {
      * Helper method para reutilizar en otros servicios
      */
     public ReviewResponse mapToReviewResponse(Review review) {
-        // Calcular likes y dislikes
         Long likes = reviewRepository.countLikesByReviewId(review.getReviewId());
         Long dislikes = reviewRepository.countDislikesByReviewId(review.getReviewId());
 
-        // Obtener URLs de imágenes
         List<String> imageUrls = review.getImages().stream()
                 .map(ReviewImage::getImageUrl)
                 .toList();
 
+        Integer userId = null;
+        String userName = "Anonymous";
+        
+        if (review.getUser() != null) {
+            userId = review.getIsAnonymous() ? null : review.getUser().getUserId();
+            userName = review.getIsAnonymous() ? "Anonymous" : review.getUser().getName();
+        }
+
         return ReviewResponse.builder()
                 .reviewId(review.getReviewId())
-                .userId(review.getUser().getUserId())
-                .userName(review.getUser().getName())
+                .userId(userId)
+                .userName(userName)
                 .professorId(review.getProfessor().getProfessorId())
                 .professorName(review.getProfessor().getName())
                 .subjectId(review.getSubject().getSubjectId())
@@ -137,8 +143,10 @@ public class ReviewService {
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .imageUrls(imageUrls)
+                .isAnonymous(review.getIsAnonymous())
                 .likeCount(likes)
                 .dislikeCount(dislikes)
+                .totalVotes((int) (likes - dislikes))
                 .status(review.getStatus().getStatusName())
                 .createdAt(review.getCreatedAt())
                 .build();

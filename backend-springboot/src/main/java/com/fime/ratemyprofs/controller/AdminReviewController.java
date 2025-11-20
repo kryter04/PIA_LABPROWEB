@@ -20,17 +20,19 @@ public class AdminReviewController {
 
     /**
      * GET /api/admin/reviews
-     * Lista todas las reseñas pendientes de aprobación (solo administradores)
+     * Lista reseñas filtradas por estado (solo administradores)
      * Query params:
+     * - status: Estado de las reseñas (Pending, Approved, Rejected, o vacío para todas)
      * - page: Número de página (default: 0)
      * - size: Tamaño de página (default: 10)
      */
     @GetMapping
-    public ResponseEntity<Page<ReviewResponse>> getPendingReviews(
+    public ResponseEntity<Page<ReviewResponse>> getReviews(
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
-        Page<ReviewResponse> reviews = adminReviewService.getPendingReviews(page, size);
+        Page<ReviewResponse> reviews = adminReviewService.getReviews(status, page, size);
         return ResponseEntity.ok(reviews);
     }
 

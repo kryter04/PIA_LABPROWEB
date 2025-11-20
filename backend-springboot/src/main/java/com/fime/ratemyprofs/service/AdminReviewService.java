@@ -24,14 +24,30 @@ public class AdminReviewService {
     private final ReviewService reviewService;
 
     /**
-     * Obtiene todas las reseñas pendientes de aprobación
+     * Obtiene reseñas filtradas por estado
      * Solo para administradores
      */
-    public Page<ReviewResponse> getPendingReviews(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
-        Page<Review> reviews = reviewRepository.findByStatusName("Pending", pageable);
+    public Page<ReviewResponse> getReviews(String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Review> reviews;
+        
+        if (status != null && !status.trim().isEmpty()) {
+            reviews = reviewRepository.findByStatusName(status, pageable);
+        } else {
+            reviews = reviewRepository.findAll(pageable);
+        }
         
         return reviews.map(reviewService::mapToReviewResponse);
+    }
+
+    /**
+     * Obtiene todas las reseñas según el filtro de estado
+     * Solo para administradores
+     * @deprecated Use getReviews(String, int, int) instead
+     */
+    @Deprecated
+    public Page<ReviewResponse> getPendingReviews(int page, int size) {
+        return getReviews("Pending", page, size);
     }
 
     /**
