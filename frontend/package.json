@@ -9,12 +9,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.17",
-    "astro": "^5.15.8",
+    "@tailwindcss/vite": "^4.3.2",
+    "astro": "^6.4.8",
     "jquery": "^3.7.1"
   },
   "devDependencies": {
-    "@types/jquery": "^3.5.33",
-    "tailwindcss": "^4.1.17"
-  }
+    "@types/jquery": "^3.5.34",
+    "tailwindcss": "^4.3.2"
+  },
+  "packageManager": "pnpm@10.17.1"
 }
